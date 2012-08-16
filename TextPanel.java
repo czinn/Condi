@@ -1,8 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.*;
 import java.io.*;
-import javax.imageio.*;
 
 /** A simple custom JPanel for use in text-based Java applications
   * 
