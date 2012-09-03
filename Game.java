@@ -16,6 +16,8 @@ public class Game extends JFrame implements KeyListener {
   CharCol messageCol;
   int messageTime;
   
+  Menu menuMain;
+  
   public static void main(String[] args) {
     Game g = new Game();
   }
@@ -32,6 +34,9 @@ public class Game extends JFrame implements KeyListener {
     message = "";
     messageTime = 0;
     messageCol = new CharCol();
+    
+    //Init menus
+    menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
     
     //Start the game
     run();
@@ -51,6 +56,9 @@ public class Game extends JFrame implements KeyListener {
       //Draw a border, with a spot at the bottom for messages
       p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 0, 0, 48, 80);
       p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 47, 0, 3, 80);
+      
+      //Draw the menu
+      menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
       
       //Draw the message if there is one, and tick down message timer
       if(messageTime > 0) {
@@ -86,6 +94,16 @@ public class Game extends JFrame implements KeyListener {
   public void keyPressed(KeyEvent e) {
     int k = e.getKeyCode();
     postMessage("Pressed " + k, new CharCol());
+    
+    if(k == 38) { //UP
+      menuMain.selectUp();
+    }
+    if(k == 40) { //DOWN
+      menuMain.selectDown();
+    }
+    if(k == 10) { //ENTER (select)
+      postMessage(menuMain.getOption(menuMain.getSelect()), new CharCol());
+    }
   }
   
   /** Handle the key-released event */
