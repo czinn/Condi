@@ -16,7 +16,14 @@ public class Game extends JFrame implements KeyListener {
   CharCol messageCol;
   int messageTime;
   
+  int gs;
+  int sgs;
+  static int GS_MAIN_MENU = 0;
+  static int GS_GAME = 1;
+  
   Menu menuMain;
+  
+  Map test;
   
   public static void main(String[] args) {
     Game g = new Game();
@@ -35,8 +42,14 @@ public class Game extends JFrame implements KeyListener {
     messageTime = 0;
     messageCol = new CharCol();
     
+    gs = GS_MAIN_MENU;
+    sgs = 0;
+    
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
+    
+    //Init the test map
+    test = new Map(100, 100);
     
     //Start the game
     run();
@@ -56,14 +69,20 @@ public class Game extends JFrame implements KeyListener {
       //Draw a border, with a spot at the bottom for messages
       p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 0, 0, 48, 80);
       p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 47, 0, 3, 80);
-      
-      //Draw the menu
-      menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
+
       
       //Draw the message if there is one, and tick down message timer
       if(messageTime > 0) {
         p.drawString(message, messageCol, 48, 3);
         messageTime--;
+      }      
+      
+      if(gs == GS_MAIN_MENU) {
+        //Draw the menu
+        menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
+      } else if(gs == GS_GAME) {
+        //Draw the map
+        test.draw(p, 1, 1, 0, 0, 46, 78);
       }
       
       //Paint stuff
@@ -95,19 +114,29 @@ public class Game extends JFrame implements KeyListener {
     int k = e.getKeyCode();
     postMessage("Pressed " + k, new CharCol());
     
-    if(k == 38) { //UP
-      menuMain.selectUp();
-    }
-    if(k == 40) { //DOWN
-      menuMain.selectDown();
-    }
-    if(k == 10) { //ENTER (select)
-      postMessage(menuMain.getOption(menuMain.getSelect()), new CharCol());
+    if(gs == GS_MAIN_MENU) {
+      if(k == 38) { //UP
+        menuMain.selectUp();
+      }
+      if(k == 40) { //DOWN
+        menuMain.selectDown();
+      }
+      if(k == 10) { //ENTER (select)
+        int sel = menuMain.getSelect();
+        if(sel == 0) { //"Start"
+          gs = GS_GAME;
+        }
+      }
     }
   }
   
   /** Handle the key-released event */
   public void keyReleased(KeyEvent e) {
     
+  }
+  
+  /** Generates a random integer value between 'a' and 'b' - 1 */
+  public static int rand(int a, int b) {
+    return (int)Math.floor(Math.random() * (b - a)) + a;
   }
 }

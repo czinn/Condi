@@ -123,7 +123,9 @@ public class TextPanel extends JPanel {
         g.setColor(tcc.bg);
         g.fillRect(j * SIZE, i * SIZE, SIZE, SIZE);
         g.setColor(tcc.text);
-        g.drawString(ch[i][j] + "", j * SIZE + 2, i * SIZE + 12);
+        char tch = ch[i][j];
+        if(tch == (char)0) tch = ' ';
+        g.drawString(tch + "", j * SIZE + 2, i * SIZE + 12);
       }
     }
   }
