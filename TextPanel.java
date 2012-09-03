@@ -9,6 +9,8 @@ import java.io.*;
 public class TextPanel extends JPanel {
   private char[][] ch; //chars
   private CharCol[][] cc; //char colours
+  private char[][] dch; //display chars
+  private CharCol[][] dcc; //display char colours
   private static Font font = new Font("Courier New", Font.PLAIN, 16);
   private static int SIZE = 16;
   
@@ -30,15 +32,13 @@ public class TextPanel extends JPanel {
   }
   
   TextPanel(int rows, int cols) {
+    //clear it
     ch = new char[rows][cols];
     cc = new CharCol[rows][cols];
-    //set all chars to a (white, black) ' '
-    for(int i = 0; i < rows; i++) {
-      for(int j = 0; j < cols; j++) {
-        ch[i][j] = ' ';
-        cc[i][j] = new CharCol();
-      }
-    }
+    clear();
+    
+    //flip it
+    flip();
   }
   
   public int getRows() {
@@ -111,6 +111,13 @@ public class TextPanel extends JPanel {
     }
   }
   
+  /** Swaps the buffers and clears the hidden one */
+  public void flip() {
+    dch = ch.clone();
+    dcc = cc.clone();
+    clear();
+  }
+  
   @Override
   protected void paintComponent(Graphics g) {
     g.setFont(font);
@@ -118,12 +125,12 @@ public class TextPanel extends JPanel {
     g.fillRect(0, 0, getWidth(), getHeight());
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
-        CharCol tcc = cc[i][j];
+        CharCol tcc = dcc[i][j];
         if(tcc == null) tcc = new CharCol();
         g.setColor(tcc.bg);
         g.fillRect(j * SIZE, i * SIZE, SIZE, SIZE);
         g.setColor(tcc.text);
-        char tch = ch[i][j];
+        char tch = dch[i][j];
         if(tch == (char)0) tch = ' ';
         g.drawString(tch + "", j * SIZE + 2, i * SIZE + 12);
       }

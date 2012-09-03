@@ -7,7 +7,7 @@ import java.awt.event.*;
  * 
  * @author Charles Zinn
  */
-public class Game extends JFrame implements KeyListener {
+public class Game extends JFrame implements KeyListener, Runnable {
   public static int FPS = 60;
   
   TextPanel p;
@@ -53,6 +53,7 @@ public class Game extends JFrame implements KeyListener {
     
     //Start the game
     run();
+    //new Thread(this).start();
   }
   
   /** Main game loop */
@@ -85,7 +86,9 @@ public class Game extends JFrame implements KeyListener {
         test.draw(p, 1, 1, 0, 0, 46, 78);
       }
       
-      //Paint stuff
+      
+      //Flip buffer and repaint
+      p.flip();
       this.repaint();
       
       //End of loop
