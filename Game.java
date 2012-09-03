@@ -25,6 +25,8 @@ public class Game extends JFrame implements KeyListener {
   
   Map test;
   
+  int pr, pc;
+  
   public static void main(String[] args) {
     Game g = new Game();
   }
@@ -44,6 +46,9 @@ public class Game extends JFrame implements KeyListener {
     
     gs = GS_MAIN_MENU;
     sgs = 0;
+    
+    pr = 10;
+    pc = 10;
     
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
@@ -82,7 +87,9 @@ public class Game extends JFrame implements KeyListener {
         menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
       } else if(gs == GS_GAME) {
         //Draw the map
-        test.draw(p, 1, 1, 0, 0, 46, 78);
+        test.draw(p, 1, 1, 0, 0, 46, 78, pr, pc);
+        //Draw a dude
+        p.drawChar('@', pr + 1, pc + 1);
       }
       
       
@@ -128,6 +135,19 @@ public class Game extends JFrame implements KeyListener {
         if(sel == 0) { //"Start"
           gs = GS_GAME;
         }
+      }
+    } else if(gs == GS_GAME) {
+      if(k == 37) { //LEFT
+        pc--;
+      }
+      if(k == 38) { //UP
+        pr--;
+      }
+      if(k == 39) { //RIGHT
+        pc++;
+      }
+      if(k == 40) { //DOWN
+        pr++;
       }
     }
   }
