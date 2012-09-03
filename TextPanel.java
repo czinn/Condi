@@ -3,9 +3,9 @@ import java.awt.*;
 import java.io.*;
 
 /** A simple custom JPanel for use in text-based Java applications
-  * 
-  * @author Charles Zinn
-  */
+ * 
+ * @author Charles Zinn
+ */
 public class TextPanel extends JPanel {
   private char[][] ch; //chars
   private CharCol[][] cc; //char colours
@@ -118,9 +118,11 @@ public class TextPanel extends JPanel {
     g.fillRect(0, 0, getWidth(), getHeight());
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
-        g.setColor(cc[i][j].bg);
+        CharCol tcc = cc[i][j];
+        if(tcc == null) tcc = new CharCol();
+        g.setColor(tcc.bg);
         g.fillRect(j * SIZE, i * SIZE, SIZE, SIZE);
-        g.setColor(cc[i][j].text);
+        g.setColor(tcc.text);
         g.drawString(ch[i][j] + "", j * SIZE + 2, i * SIZE + 12);
       }
     }
