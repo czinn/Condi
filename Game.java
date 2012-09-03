@@ -7,7 +7,7 @@ import java.awt.event.*;
  * 
  * @author Charles Zinn
  */
-public class Game extends JFrame implements KeyListener, Runnable {
+public class Game extends JFrame implements KeyListener {
   public static int FPS = 60;
   
   TextPanel p;
@@ -53,7 +53,6 @@ public class Game extends JFrame implements KeyListener, Runnable {
     
     //Start the game
     run();
-    //new Thread(this).start();
   }
   
   /** Main game loop */
