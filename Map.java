@@ -13,7 +13,16 @@ public class Map {
     tiles = new Tile[rows][cols];
     for(int i = 0; i < rows; i++) {
       for(int j = 0; j < cols; j++) {
-        tiles[i][j] = new Tile(Game.rand(0, 10) == 0 ? Tile.WALL : Tile.FLOOR);
+        tiles[i][j] = new Tile(Tile.WALL);
+      }
+    }
+    generateDungeon(0, 0, rows, cols);
+  }
+  
+  public void clear() {
+    for(int i = 0; i < getRows(); i++) {
+      for(int j = 0; j < getCols(); j++) {
+        tiles[i][j] = new Tile(Tile.WALL);
       }
     }
   }
@@ -29,6 +38,68 @@ public class Map {
   public Tile getTile(int row, int col) {
     return tiles[row][col];
   }
+  
+  /** Recursively generates a dungeon map inside the given box
+    * Map should be clear()ed beforehand
+    */
+  public void generateDungeon(int row, int col, int height, int width) {
+    //At least one dimension must be over 30 (dimensions under 30 should not be split)
+    if(height >= 30 || width >= 30) {
+      boolean vertSplit = Game.rand(0, 1) == 0; //whether the seperation line is vertical or horizontal (random)
+      if(height < 30) vertSplit = true; //must split vertical if less than 30 tall
+      if(width < 30) vertSplit = false; //must split horizontal if less than 30 wide
+      
+      if(vertSplit) { //splitting vertically
+        int splitLine = Game.rand(12, width - 12);
+        generateDungeon(row, col, height, splitLine);
+        generateDungeon(row, col + splitLine, height, width - splitLine);
+        //connect them
+        int pathPos = Game.rand(6, height - 6); //somewhere where there is definitely room on both sides
+        int colIndex = col + splitLine;
+        System.out.println("making a path on row " + pathPos + " which is from 6 to " + (height - 6));
+        while(getTile(pathPos + row, colIndex).getType() == Tile.WALL) {
+          getTile(pathPos + row, colIndex).setType(Tile.FLOOR);
+          colIndex++;
+        }
+        colIndex = col + splitLine - 1;
+        while(getTile(pathPos + row, colIndex).getType() == Tile.WALL) {
+          getTile(pathPos + row, colIndex).setType(Tile.FLOOR);
+          colIndex--;
+        }
+      } else { //splitting horizontally
+        int splitLine = Game.rand(12, height - 12);
+        generateDungeon(row, col, splitLine, width);
+        generateDungeon(row + splitLine, col, height - splitLine, width);
+        //connect them
+        int pathPos = Game.rand(6, width - 6); //somewhere where there is definitely room on both sides
+        int rowIndex = row + splitLine;
+        System.out.println("making a path on col " + pathPos + " which is from 6 to " + (width - 6));
+        while(getTile(rowIndex, pathPos + col).getType() == Tile.WALL) {
+          getTile(rowIndex, pathPos + col).setType(Tile.FLOOR);
+          rowIndex++;
+        }
+        rowIndex = row + splitLine - 1;
+        while(getTile(rowIndex, pathPos + col).getType() == Tile.WALL) {
+          getTile(rowIndex, pathPos + col).setType(Tile.FLOOR);
+          rowIndex--;
+        }
+      }
+    } else {
+      //Create a single room inside this box
+      int upad = Game.rand(1, 5);
+      int dpad = Game.rand(1, 5);
+      int lpad = Game.rand(1, 5);
+      int rpad = Game.rand(1, 5);
+      for(int r = row + upad; r < row + height - dpad; r++) {
+        for(int c = col + lpad; c < col + width - rpad; c++) {
+          getTile(r, c).setType(Tile.FLOOR);
+        }
+      }
+      //Put extra features in rooms to make them less boring
+      //Spawn monsters and/or loot in the room (depending on size)
+    }
+  }
+  
   
   /** Checks for lines of sight between two tiles using Bresenham's line algorithm */
   public boolean sight(int r0, int c0, int r1, int c1) {
@@ -134,6 +205,15 @@ class Tile {
   
   public int getData() {
     return data;
+  }
+  
+  public void setType(int type) {
+    this.type = type;
+    data = 0; //remove data; different types of tiles have different meanings for values, should clear by default
+  }
+  
+  public void setData(int data) {
+    this.data = data;
   }
   
   public char getChar() {

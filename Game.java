@@ -32,7 +32,7 @@ public class Game extends JFrame implements KeyListener {
   }
   
   Game() {
-    super("Roguelike");
+    super("Condi");
     p = new TextPanel(50, 80);
     this.add(p);
     this.pack();
