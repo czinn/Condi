@@ -217,16 +217,21 @@ public class Map {
     
     int timePass = smallUser.getTime(); //can't keep using smallUser.getTime() because he'll have his time passed also
     
-    //Pass time for all users
+    //Pass time for all users, and make moves if they reached 0
     for(TimeUser t : tus) {
       t.passTime(timePass);
+      if(t.getTime() == 0 && !(t instanceof Player)) {
+        t.takeTurn();
+      }
     }
-    
-    if(!(smallUser instanceof Player))
-      smallUser.takeTurn();
     
     //Return time passed
     return timePass;
+  }
+  
+  /** If waiting for the player to make a move, returns true */
+  public boolean waitingForPlayer() {
+    return getPlayer().getTime() == 0;
   }
   
   /** Draws part of the map, with the top left corner being positioned at (row, col)
@@ -244,11 +249,12 @@ public class Map {
       }
     }
     
-    //Draw units if they are visible from the player's position
+    //Draw units if they are visible
     for(TimeUser t : tus) {
       if(t instanceof Unit) {
         Unit u = (Unit)t;
-        p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow(), col + u.getCol());
+        if(sight(vr, vc, u.getRow(), u.getCol()))
+          p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow(), col + u.getCol());
       }
     }
   }

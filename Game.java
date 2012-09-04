@@ -25,7 +25,9 @@ public class Game extends JFrame implements KeyListener {
   
   Map test;
   
-  int pr, pc;
+  Player player;
+  
+  int passTimeWait;
   
   public static void main(String[] args) {
     Game g = new Game();
@@ -47,14 +49,10 @@ public class Game extends JFrame implements KeyListener {
     gs = GS_MAIN_MENU;
     sgs = 0;
     
-    pr = 10;
-    pc = 10;
+    passTimeWait = 0;
     
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
-    
-    //Init the test map
-    test = new Map(46, 78);
     
     //Start the game
     run();
@@ -86,10 +84,24 @@ public class Game extends JFrame implements KeyListener {
         //Draw the menu
         menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
       } else if(gs == GS_GAME) {
+        /* Does time well
+        //Tick down passTimeWait if it's more than 0; if it is 0, make a move if we're not waiting for the player
+        if(passTimeWait > 0)
+          passTimeWait = (int)Math.max(passTimeWait - 1000 / FPS, 0);
+        if(passTimeWait == 0 && !test.waitingForPlayer()) {
+          passTimeWait = test.passTime();
+        }*/
+        
+        //Does time fast
+        if(!test.waitingForPlayer())
+          test.passTime();
+        
+        //Does time really fast
+        //while(!test.waitingForPlayer())
+        // test.passTime();
+        
         //Draw the map
-        test.draw(p, 1, 1, 0, 0, 46, 78, pr, pc);
-        //Draw a dude
-        p.drawChar('@', pr + 1, pc + 1);
+        test.draw(p, 1, 1, 0, 0, 46, 78, player.getRow(), player.getCol());
       }
       
       
@@ -134,20 +146,32 @@ public class Game extends JFrame implements KeyListener {
         int sel = menuMain.getSelect();
         if(sel == 0) { //"Start"
           gs = GS_GAME;
+          
+          //Init the test map
+          test = new Map(46, 78);
+          
+          //Init the player (will be loaded from a file or something, but for now it is just a player)
+          player = new Player(10, 10, test);
+          //Spawn the player into the map
+          test.spawnPlayer(player);
         }
       }
     } else if(gs == GS_GAME) {
       if(k == 37) { //LEFT
-        pc--;
+        if(player.isReady())
+          player.move(0, -1);
       }
       if(k == 38) { //UP
-        pr--;
+        if(player.isReady())
+          player.move(-1, 0);
       }
       if(k == 39) { //RIGHT
-        pc++;
+        if(player.isReady())
+          player.move(0, 1);
       }
       if(k == 40) { //DOWN
-        pr++;
+        if(player.isReady())
+          player.move(1, 0);
       }
     }
   }

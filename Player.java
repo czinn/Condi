@@ -6,6 +6,11 @@ public class Player extends Unit {
     super(0, row, col, map);
   }
   
+  /** Player is super fast for testing */
+  public int getSpeed() {
+    return 200;
+  }
+  
   /** Returns the character that should be used to represent the player */
   public char getChar() {
     return '@';
