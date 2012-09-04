@@ -9,6 +9,9 @@ import java.awt.*;
 public class Map {
   Tile[][] tiles;
   
+  static int SPLIT_MIN = 20;
+  static int MIN_ROOM_SIZE = 8;
+  
   Map(int rows, int cols) {
     tiles = new Tile[rows][cols];
     for(int i = 0; i < rows; i++) {
@@ -43,18 +46,18 @@ public class Map {
     * Map should be clear()ed beforehand
     */
   public void generateDungeon(int row, int col, int height, int width) {
-    //At least one dimension must be over 30 (dimensions under 30 should not be split)
-    if(height >= 30 || width >= 30) {
-      boolean vertSplit = Game.rand(0, 1) == 0; //whether the seperation line is vertical or horizontal (random)
-      if(height < 30) vertSplit = true; //must split vertical if less than 30 tall
-      if(width < 30) vertSplit = false; //must split horizontal if less than 30 wide
+    //At least one dimension must be over SPLIT_MIN (dimensions under SPLIT_MIN should not be split)
+    if(height >= SPLIT_MIN || width >= SPLIT_MIN) {
+      boolean vertSplit = Game.rand(0, 2) == 0; //whether the seperation line is vertical or horizontal (random)
+      if(height < SPLIT_MIN) vertSplit = true; //must split vertical if less than 30 tall
+      if(width < SPLIT_MIN) vertSplit = false; //must split horizontal if less than 30 wide
       
       if(vertSplit) { //splitting vertically
-        int splitLine = Game.rand(12, width - 12);
+        int splitLine = Game.rand(MIN_ROOM_SIZE, width - MIN_ROOM_SIZE);
         generateDungeon(row, col, height, splitLine);
         generateDungeon(row, col + splitLine, height, width - splitLine);
         //connect them
-        int pathPos = Game.rand(6, height - 6); //somewhere where there is definitely room on both sides
+        int pathPos = Game.rand(MIN_ROOM_SIZE / 2, height - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int colIndex = col + splitLine;
         System.out.println("making a path on row " + pathPos + " which is from 6 to " + (height - 6));
         while(getTile(pathPos + row, colIndex).getType() == Tile.WALL) {
@@ -67,11 +70,11 @@ public class Map {
           colIndex--;
         }
       } else { //splitting horizontally
-        int splitLine = Game.rand(12, height - 12);
+        int splitLine = Game.rand(MIN_ROOM_SIZE, height - MIN_ROOM_SIZE);
         generateDungeon(row, col, splitLine, width);
         generateDungeon(row + splitLine, col, height - splitLine, width);
         //connect them
-        int pathPos = Game.rand(6, width - 6); //somewhere where there is definitely room on both sides
+        int pathPos = Game.rand(MIN_ROOM_SIZE / 2, width - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int rowIndex = row + splitLine;
         System.out.println("making a path on col " + pathPos + " which is from 6 to " + (width - 6));
         while(getTile(rowIndex, pathPos + col).getType() == Tile.WALL) {
@@ -86,10 +89,10 @@ public class Map {
       }
     } else {
       //Create a single room inside this box
-      int upad = Game.rand(1, 5);
-      int dpad = Game.rand(1, 5);
-      int lpad = Game.rand(1, 5);
-      int rpad = Game.rand(1, 5);
+      int upad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
+      int dpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
+      int lpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
+      int rpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
       for(int r = row + upad; r < row + height - dpad; r++) {
         for(int c = col + lpad; c < col + width - rpad; c++) {
           getTile(r, c).setType(Tile.FLOOR);
