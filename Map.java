@@ -59,7 +59,6 @@ public class Map {
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, height - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int colIndex = col + splitLine;
-        System.out.println("making a path on row " + pathPos + " which is from 6 to " + (height - 6));
         while(getTile(pathPos + row, colIndex).getType() == Tile.WALL) {
           getTile(pathPos + row, colIndex).setType(Tile.FLOOR);
           colIndex++;
@@ -76,7 +75,6 @@ public class Map {
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, width - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int rowIndex = row + splitLine;
-        System.out.println("making a path on col " + pathPos + " which is from 6 to " + (width - 6));
         while(getTile(rowIndex, pathPos + col).getType() == Tile.WALL) {
           getTile(rowIndex, pathPos + col).setType(Tile.FLOOR);
           rowIndex++;

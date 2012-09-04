@@ -54,7 +54,7 @@ public class Game extends JFrame implements KeyListener {
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
     
     //Init the test map
-    test = new Map(100, 100);
+    test = new Map(46, 78);
     
     //Start the game
     run();
