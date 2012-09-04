@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.Vector;
 
 /** Contains map data
   * This includes references to all entities
@@ -8,26 +9,28 @@ import java.awt.*;
   */
 public class Map {
   Tile[][] tiles;
+  Vector<TimeUser> tus;
   
   static int SPLIT_MIN = 20;
   static int MIN_ROOM_SIZE = 8;
   
   Map(int rows, int cols) {
     tiles = new Tile[rows][cols];
-    for(int i = 0; i < rows; i++) {
-      for(int j = 0; j < cols; j++) {
-        tiles[i][j] = new Tile(Tile.WALL);
-      }
-    }
+    clear();
+    
     generateDungeon(0, 0, rows, cols);
   }
   
   public void clear() {
+    tiles = new Tile[getRows()][getCols()];
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
         tiles[i][j] = new Tile(Tile.WALL);
       }
     }
+    
+    //Empty the TimeUser array
+    tus = new Vector<TimeUser>();
   }
   
   public int getRows() {
@@ -87,17 +90,30 @@ public class Map {
       }
     } else {
       //Create a single room inside this box
-      int upad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
-      int dpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
-      int lpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
-      int rpad = Game.rand(1, MIN_ROOM_SIZE / 2 - 1);
+      int upad = Game.rand(1, MIN_ROOM_SIZE / 2);
+      int dpad = Game.rand(1, MIN_ROOM_SIZE / 2);
+      int lpad = Game.rand(1, MIN_ROOM_SIZE / 2);
+      int rpad = Game.rand(1, MIN_ROOM_SIZE / 2);
       for(int r = row + upad; r < row + height - dpad; r++) {
         for(int c = col + lpad; c < col + width - rpad; c++) {
           getTile(r, c).setType(Tile.FLOOR);
         }
       }
       //Put extra features in rooms to make them less boring
+      int rmheight = height - upad - dpad;
+      int rmwidth = width - lpad - rpad;
+      int rmrow = row + upad;
+      int rmcol = col + lpad;
+      //Add pillars if room is big enough
+      if(rmwidth > 10 && rmheight > 10) {
+        getTile(rmrow + 3, rmcol + 3).setType(Tile.PILLAR);
+        getTile(rmrow + 3, rmcol + rmwidth - 4).setType(Tile.PILLAR);
+        getTile(rmrow + rmheight - 4, rmcol + rmwidth - 4).setType(Tile.PILLAR);
+        getTile(rmrow + rmheight - 4, rmcol + 3).setType(Tile.PILLAR);
+      }
       //Spawn monsters and/or loot in the room (depending on size)
+      //For now, spawn one monster right in the middle
+      spawnMonster(0, rmrow + rmheight / 2, rmcol + rmwidth / 2);
     }
   }
   
@@ -162,6 +178,57 @@ public class Map {
     return getTile(row, col).isOpaque();
   }
   
+  /** Gets a reference to the player (first player object in tus) */
+  public Player getPlayer() {
+    for(TimeUser t : tus) {
+      if(t instanceof Player)
+        return (Player)t;
+    }
+    
+    //No player object
+    return null;
+  }
+  
+  /** Spawns a player into the map (only works if there is no player in the map currently (there can only be one) */
+  public void spawnPlayer(Player p) {
+    if(getPlayer() == null)
+      tus.add(p);
+  }
+  
+  /** Spawns a random monster on the map at the given position */
+  public void spawnMonster(int level, int row, int col) {
+    tus.add(new Monster(level, row, col, this));
+  }
+  
+  /** Passes time for all TimeUsers equal to the smallest time among them.
+    * Asks the first TimeUser for a move (unless that TimeUser is a Player)
+    * Returns the length of time passed */
+  public int passTime() {
+    TimeUser smallUser = null;
+    for(TimeUser t : tus) {
+      if(smallUser == null || t.getTime() < smallUser.getTime()) {
+        smallUser = t;
+      }
+    }
+    
+    //If there weren't any TimeUsers? just to prevent some random error that could happen possibly maybe
+    if(smallUser == null)
+      return 0;
+    
+    int timePass = smallUser.getTime(); //can't keep using smallUser.getTime() because he'll have his time passed also
+    
+    //Pass time for all users
+    for(TimeUser t : tus) {
+      t.passTime(timePass);
+    }
+    
+    if(!(smallUser instanceof Player))
+      smallUser.takeTurn();
+    
+    //Return time passed
+    return timePass;
+  }
+  
   /** Draws part of the map, with the top left corner being positioned at (row, col)
     * The tile drawn at that position is the tile (srow, scol)
     * The box is (height, width) big
@@ -174,6 +241,14 @@ public class Map {
         char tc = t.getChar();
         CharCol tcc = sight(vr, vc, srow + r, scol + c) ? t.getCol() : new CharCol(Color.WHITE, Color.GRAY);
         p.drawChar(tc, tcc, row + r, col + c);
+      }
+    }
+    
+    //Draw units if they are visible from the player's position
+    for(TimeUser t : tus) {
+      if(t instanceof Unit) {
+        Unit u = (Unit)t;
+        p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow(), col + u.getCol());
       }
     }
   }
@@ -190,6 +265,7 @@ class Tile {
   
   static int FLOOR = 0;
   static int WALL = 1;
+  static int PILLAR = 2;
   
   Tile(int type) {
     this(type, 0);
@@ -226,6 +302,8 @@ class Tile {
       return '.';
     if(type == WALL)
       return '#';
+    if(type == PILLAR)
+      return 'O';
     
     return '?';
   }
@@ -239,6 +317,8 @@ class Tile {
       return new CharCol();
     if(type == WALL)
       return new CharCol();
+    if(type == PILLAR)
+      return new CharCol();
     
     return new CharCol();
   }
@@ -250,7 +330,20 @@ class Tile {
   public static boolean isOpaque(int type) {
     if(type == FLOOR) return false;
     if(type == WALL) return true;
+    if(type == PILLAR) return true;
     
     return false;
+  }
+  
+  public boolean isWalkable() {
+    return Tile.isWalkable(type);
+  }
+  
+  public static boolean isWalkable(int type) {
+    if(type == FLOOR) return true;
+    if(type == WALL) return false;
+    if(type == PILLAR) return false;
+    
+    return true;
   }
 }
