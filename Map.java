@@ -234,6 +234,17 @@ public class Map {
     return getPlayer().getTime() == 0;
   }
   
+  /** Returns the unit on the given tile, or null otherwise */
+  public Unit getLocationUnit(int row, int col) {
+    for(TimeUser t : tus) {
+      if(t instanceof Unit) {
+        if(((Unit)t).getRow() == row && ((Unit)t).getCol() == col)
+          return (Unit)t;
+      }
+    }
+    return null;
+  }
+  
   /** Draws part of the map, with the top left corner being positioned at (row, col)
     * The tile drawn at that position is the tile (srow, scol)
     * The box is (height, width) big

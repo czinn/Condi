@@ -101,14 +101,14 @@ public class Unit extends TimeUser {
   /** Moves to target relative square (doesn't move if there is an obstacle or too far away) (example: move(-1, 1)) */
   public void move(int r, int c) {
     if(Math.abs(r) <= 1 && Math.abs(c) <= 1) {
-      if(map.getTile(getRow() + r, getCol() + c).isWalkable()) {
+      if(map.getTile(getRow() + r, getCol() + c).isWalkable() && map.getLocationUnit(getRow() + r, getCol() + c) == null) {
         setRow(getRow() + r);
         setCol(getCol() + c);
         int distGone = Math.abs(r) + Math.abs(c);
         if(distGone == 1)
           addTime(getSpeed());
         if(distGone == 2)
-          addTime((int)Math.round(getSpeed() * 1.141));
+          addTime((int)Math.round(getSpeed() * 1.41));
       }
     }
   }

@@ -29,6 +29,9 @@ public class Game extends JFrame implements KeyListener {
   
   int passTimeWait;
   
+  int currow; //cursor row (on the map, not the screen)
+  int curcol; //cursor col (on the map, not the screen)
+  
   public static void main(String[] args) {
     Game g = new Game();
   }
@@ -93,18 +96,17 @@ public class Game extends JFrame implements KeyListener {
         }*/
         
         //Does time fast
-        if(!test.waitingForPlayer())
-          test.passTime();
+        //if(!test.waitingForPlayer())
+        //  test.passTime();
         
         //Does time really fast
-        //while(!test.waitingForPlayer())
-        // test.passTime();
+        while(!test.waitingForPlayer())
+         test.passTime();
         
         //Draw the map
         test.draw(p, 1, 1, 0, 0, 46, 78, player.getRow(), player.getCol());
       }
-      
-      
+        
       //Flip buffer and repaint
       p.flip();
       this.repaint();
@@ -144,9 +146,7 @@ public class Game extends JFrame implements KeyListener {
       }
       if(k == 10) { //ENTER (select)
         int sel = menuMain.getSelect();
-        if(sel == 0) { //"Start"
-          gs = GS_GAME;
-          
+        if(sel == 0) { //"Start"          
           //Init the test map
           test = new Map(46, 78);
           
@@ -154,6 +154,8 @@ public class Game extends JFrame implements KeyListener {
           player = new Player(10, 10, test);
           //Spawn the player into the map
           test.spawnPlayer(player);
+          
+          gs = GS_GAME;
         }
       }
     } else if(gs == GS_GAME) {
@@ -173,6 +175,22 @@ public class Game extends JFrame implements KeyListener {
         if(player.isReady())
           player.move(1, 0);
       }
+      if(k == 36) { //HOME (NUMPAD UPLEFT)
+        if(player.isReady())
+          player.move(-1, -1);
+      }
+      if(k == 33) { //PAGEUP (NUMPAD UPRIGHT)
+        if(player.isReady())
+          player.move(-1, 1);
+      }
+      if(k == 35) { //END (NUMPAD DOWNLEFT)
+        if(player.isReady())
+          player.move(1, -1);
+      }
+      if(k == 34) { //PAGEDOWN (NUMPAD DOWNRIGHT)
+        if(player.isReady())
+          player.move(1, 1);
+      }
     }
   }
   
@@ -184,5 +202,10 @@ public class Game extends JFrame implements KeyListener {
   /** Generates a random integer value between 'a' and 'b' - 1 */
   public static int rand(int a, int b) {
     return (int)Math.floor(Math.random() * (b - a)) + a;
+  }
+  
+  /** If something should be flashing on the display, it should be drawn whenever this is true and not when this is false */
+  public static boolean flash() {
+    return System.currentTimeMillis() % 1000 < 500;
   }
 }
