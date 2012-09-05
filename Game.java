@@ -31,6 +31,13 @@ public class Game extends JFrame implements KeyListener {
   
   int currow; //cursor row (on the map, not the screen)
   int curcol; //cursor col (on the map, not the screen)
+  int selectType; //what sort of selection is happening
+  static int SELECT_NONE = 0;
+  static int SELECT_LOOK = 1;
+  static int SELECT_ATTACK = 2;
+  
+  int scrollrow;
+  int scrollcol;
   
   public static void main(String[] args) {
     Game g = new Game();
@@ -53,6 +60,13 @@ public class Game extends JFrame implements KeyListener {
     sgs = 0;
     
     passTimeWait = 0;
+    
+    currow = 0;
+    curcol = 0;
+    selectType = SELECT_NONE;
+    
+    scrollrow = 0;
+    scrollcol = 0;
     
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
@@ -103,8 +117,29 @@ public class Game extends JFrame implements KeyListener {
         while(!test.waitingForPlayer())
          test.passTime();
         
+        //Figure out the width and height of the map display
+        int mapDisplayHeight = 46;
+        int mapDisplayWidth = 78;
+        if(selectType == SELECT_LOOK)
+          mapDisplayWidth = 39;
+        
+        //Scroll the map to the player if not selecting anything, or to the cursor if something like that is doing
+        if(selectType == SELECT_NONE) {
+          rowScroll(player.getRow(), mapDisplayHeight);
+          colScroll(player.getCol(), mapDisplayWidth);
+        } else if(selectType == SELECT_LOOK || selectType == SELECT_ATTACK) {
+          rowScroll(currow, mapDisplayHeight);
+          colScroll(curcol, mapDisplayWidth);
+        }
+        
         //Draw the map
-        test.draw(p, 1, 1, 0, 0, 46, 78, player.getRow(), player.getCol());
+        test.draw(p, 1, 1, 0 + scrollrow, 0 + scrollcol, mapDisplayHeight, mapDisplayWidth, player.getRow(), player.getCol());
+        
+        //Draw a cursor if one should be drawn
+        if(selectType == SELECT_ATTACK || selectType == SELECT_LOOK) {
+          if(Game.flash())
+            p.drawChar('X', new CharCol(Color.YELLOW), 1 + currow - scrollrow, 1 + curcol - scrollcol);
+        }
       }
         
       //Flip buffer and repaint
@@ -148,7 +183,7 @@ public class Game extends JFrame implements KeyListener {
         int sel = menuMain.getSelect();
         if(sel == 0) { //"Start"          
           //Init the test map
-          test = new Map(46, 78);
+          test = new Map(100, 100);
           
           //Init the player (will be loaded from a file or something, but for now it is just a player)
           player = new Player(10, 10, test);
@@ -159,39 +194,96 @@ public class Game extends JFrame implements KeyListener {
         }
       }
     } else if(gs == GS_GAME) {
-      if(k == 37) { //LEFT
-        if(player.isReady())
-          player.move(0, -1);
-      }
-      if(k == 38) { //UP
-        if(player.isReady())
-          player.move(-1, 0);
-      }
-      if(k == 39) { //RIGHT
-        if(player.isReady())
-          player.move(0, 1);
-      }
-      if(k == 40) { //DOWN
-        if(player.isReady())
-          player.move(1, 0);
-      }
-      if(k == 36) { //HOME (NUMPAD UPLEFT)
-        if(player.isReady())
-          player.move(-1, -1);
-      }
-      if(k == 33) { //PAGEUP (NUMPAD UPRIGHT)
-        if(player.isReady())
-          player.move(-1, 1);
-      }
-      if(k == 35) { //END (NUMPAD DOWNLEFT)
-        if(player.isReady())
-          player.move(1, -1);
-      }
-      if(k == 34) { //PAGEDOWN (NUMPAD DOWNRIGHT)
-        if(player.isReady())
-          player.move(1, 1);
+      if(selectType == SELECT_NONE) { //Moving around the map; essentially, not paused
+        if(k == 37) { //LEFT
+          if(player.isReady())
+            player.move(0, -1);
+        }
+        if(k == 38) { //UP
+          if(player.isReady())
+            player.move(-1, 0);
+        }
+        if(k == 39) { //RIGHT
+          if(player.isReady())
+            player.move(0, 1);
+        }
+        if(k == 40) { //DOWN
+          if(player.isReady())
+            player.move(1, 0);
+        }
+        if(k == 36) { //HOME (NUMPAD UPLEFT)
+          if(player.isReady())
+            player.move(-1, -1);
+        }
+        if(k == 33) { //PAGEUP (NUMPAD UPRIGHT)
+          if(player.isReady())
+            player.move(-1, 1);
+        }
+        if(k == 35) { //END (NUMPAD DOWNLEFT)
+          if(player.isReady())
+            player.move(1, -1);
+        }
+        if(k == 34) { //PAGEDOWN (NUMPAD DOWNRIGHT)
+          if(player.isReady())
+            player.move(1, 1);
+        }
+        if(k == 76) { //L (LOOK)
+          selectType = SELECT_LOOK;
+          currow = player.getRow();
+          curcol = player.getCol();
+        }
+        if(k == 65) { //A (ATTACK)
+          selectType = SELECT_ATTACK;
+          currow = player.getRow();
+          curcol = player.getCol();
+        }
+      } else { //In a menu or using a cursor of some sort; essentially, paused
+        if(selectType == SELECT_LOOK || selectType == SELECT_ATTACK) { //cursor stuff
+          if(k == 37) { //LEFT
+            if(curcol > 0) curcol--;
+          }
+          if(k == 38) { //UP
+            if(currow > 0) currow--;
+          }
+          if(k == 39) { //RIGHT
+            if(curcol < currentMap().getCols()) curcol++;
+          }
+          if(k == 40) { //DOWN
+            if(currow < currentMap().getRows()) currow++;
+          }
+          if(k == 10) { //ENTER
+            postMessage(currow + " and " + curcol, new CharCol(Color.ORANGE));
+          }
+          if(k == 27) { //ESCAPE
+            selectType = SELECT_NONE;
+          }
+        }
       }
     }
+  }
+  
+  /** Modifies "scrollrow" such that the row "r" can be seen on the map display which is "display" rows high */
+  public void rowScroll(int r, int display) {
+    //keep it 10 from any edge
+    scrollrow = Math.min(scrollrow, r - 10);
+    scrollrow = Math.max(scrollrow, r - display + 10);
+    scrollrow = Math.max(scrollrow, 0);
+    scrollrow = Math.min(scrollrow, currentMap().getRows() - display);
+  }
+  
+  /** Modifies "scrollcol" such that the col "c" can be seen on the map display which is "display" rows wide */
+  public void colScroll(int c, int display) {
+    //keep it 10 from any edge
+    scrollcol = Math.min(scrollcol, c - 10);
+    scrollcol = Math.max(scrollcol, c - display + 10);
+    scrollcol = Math.max(scrollcol, 0);
+    scrollcol = Math.min(scrollcol, currentMap().getCols() - display);
+  }
+
+  /** Returns a reference to the current map */
+  public Map currentMap() {
+    //for now, there is only one map
+    return test;
   }
   
   /** Handle the key-released event */
@@ -206,6 +298,6 @@ public class Game extends JFrame implements KeyListener {
   
   /** If something should be flashing on the display, it should be drawn whenever this is true and not when this is false */
   public static boolean flash() {
-    return System.currentTimeMillis() % 1000 < 500;
+    return System.currentTimeMillis() % 800 < 400;
   }
 }

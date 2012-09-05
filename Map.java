@@ -253,9 +253,10 @@ public class Map {
   public void draw(TextPanel p, int row, int col, int srow, int scol, int height, int width, int vr, int vc) {
     for(int r = 0; r < height; r++) {
       for(int c = 0; c < width; c++) {
+        boolean visible = sight(vr, vc, srow + r, scol + c);
         Tile t = getTile(srow + r, scol + c);
-        char tc = t.getChar();
-        CharCol tcc = sight(vr, vc, srow + r, scol + c) ? t.getCol() : new CharCol(Color.WHITE, Color.GRAY);
+        char tc = visible ? t.getChar() : ' ';
+        CharCol tcc = visible ? t.getCol() : new CharCol(Color.WHITE, Color.GRAY);
         p.drawChar(tc, tcc, row + r, col + c);
       }
     }
@@ -265,7 +266,7 @@ public class Map {
       if(t instanceof Unit) {
         Unit u = (Unit)t;
         if(sight(vr, vc, u.getRow(), u.getCol()))
-          p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow(), col + u.getCol());
+          p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow() - srow, col + u.getCol() - scol);
       }
     }
   }
