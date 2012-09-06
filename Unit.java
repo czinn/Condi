@@ -40,9 +40,20 @@ public class Unit extends TimeUser {
     health -= amt;
   }
   
+  public void heal(int amt) {
+    health += amt;
+    if(health > getMaxHealth())
+      health = getMaxHealth();
+  }
+  
+  /** This doesn't need to account for items or bonuses */
+  public int getHealth() {
+    return health;
+  }
+  
   /** This still needs to account for items and other bonuses */
   public int getMaxHealth() {
-    return 500 + 50 * level;
+    return 100 + 10 * level;
   }
   
   /** This still needs to account for items and other bonuses */
@@ -62,7 +73,7 @@ public class Unit extends TimeUser {
   
   /** This still needs to account for items and other bonuses */
   public int getDamage() {
-    return 20 * level;
+    return 20 + 20 * level;
   }
   
   /** This still needs to account for items and other bonuses */
@@ -98,17 +109,25 @@ public class Unit extends TimeUser {
     return false;
   }
   
-  /** Moves to target relative square (doesn't move if there is an obstacle or too far away) (example: move(-1, 1)) */
+  /** Moves to target relative square (doesn't move if there is an obstacle or too far away) (example: move(-1, 1)) 
+    * To simplify things, moving onto a square with a unit attacks the unit instead
+    */
   public void move(int r, int c) {
     if(Math.abs(r) <= 1 && Math.abs(c) <= 1) {
-      if(map.getTile(getRow() + r, getCol() + c).isWalkable() && map.getLocationUnit(getRow() + r, getCol() + c) == null) {
-        setRow(getRow() + r);
-        setCol(getCol() + c);
-        int distGone = Math.abs(r) + Math.abs(c);
-        if(distGone == 1)
-          addTime(getSpeed());
-        if(distGone == 2)
-          addTime((int)Math.round(getSpeed() * 1.41));
+      if(map.getTile(getRow() + r, getCol() + c).isWalkable()) {
+        Unit habitGuy = map.getLocationUnit(getRow() + r, getCol() + c);
+        if(habitGuy == null) {
+          setRow(getRow() + r);
+          setCol(getCol() + c);
+          int distGone = Math.abs(r) + Math.abs(c);
+          if(distGone == 1)
+            addTime(getSpeed());
+          if(distGone == 2)
+            addTime((int)Math.round(getSpeed() * 1.41));
+        } else {
+          //Attack the habitGuy!
+          attack(habitGuy);
+        }
       }
     }
   }

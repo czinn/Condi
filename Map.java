@@ -126,50 +126,62 @@ public class Map {
     //Uncomment to only allow sight within radius of 15
     if((r1 - r0) * (r1 - r0) + (c1 - c0) * (c1 - c0) > 15 * 15) return false;
     
-    boolean steep = (int)Math.abs(r1 - r0) > (int)Math.abs(c1 - c0);
-    if(steep) {
-      int temp = r0;
-      r0 = c0;
-      c0 = temp;
-      temp = r1;
-      r1 = c1;
-      c1 = temp;
-    }
-    if(c0 > c1) {
-      int temp = c0;
-      c0 = c1;
-      c1 = temp;
-      temp = r0;
-      r0 = r1;
-      r1 = temp;
-    }
-    int dc = c1 - c0;
-    int dr = (int)Math.abs(r1 - r0);
-    
-    int d = 2 * dr - dc;
-    int r = r0;
-    int rstep = -1;
-    if(r0 < r1) rstep = 1;
-    
-    for(int c = c0 + 1; c < c1; c++) {
-      if(d > 0) {
-        r += rstep;
-        if(steep) {
-          if(isOpaque(c, r)) return false;
-        } else {
-          if(isOpaque(r, c)) return false;
-        }
-        d = d + (2 * dr - 2 * dc);
-      } else {
-        if(steep) {
-          if(isOpaque(c, r)) return false;
-        } else {
-          if(isOpaque(r, c)) return false;
-        }
-        d = d + (2 * dr);
+    if(!isOpaque(r1, c1)) { //target is floor
+      boolean steep = (int)Math.abs(r1 - r0) > (int)Math.abs(c1 - c0);
+      if(steep) {
+        int temp = r0;
+        r0 = c0;
+        c0 = temp;
+        temp = r1;
+        r1 = c1;
+        c1 = temp;
       }
+      if(c0 > c1) {
+        int temp = c0;
+        c0 = c1;
+        c1 = temp;
+        temp = r0;
+        r0 = r1;
+        r1 = temp;
+      }
+      int dc = c1 - c0;
+      int dr = (int)Math.abs(r1 - r0);
+      
+      int d = 2 * dr - dc;
+      int r = r0;
+      int rstep = -1;
+      if(r0 < r1) rstep = 1;
+      
+      for(int c = c0 + 1; c < c1; c++) {
+        if(d > 0) {
+          r += rstep;
+          if(steep) {
+            if(isOpaque(c, r)) return false;
+          } else {
+            if(isOpaque(r, c)) return false;
+          }
+          d = d + (2 * dr - 2 * dc);
+        } else {
+          if(steep) {
+            if(isOpaque(c, r)) return false;
+          } else {
+            if(isOpaque(r, c)) return false;
+          }
+          d = d + (2 * dr);
+        }
+      }
+    } else {
+      //for walls, check vision of each of the 8 tiles around it
+      for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+          if(r1 + i >= 0 && r1 + i < getRows() && c1 + j >= 0 && c1 + j < getCols()) { //not looking outside borders
+            if(!isOpaque(r1 + i, c1 + j) && sight(r0, c0, r1 + i, c1 + j))
+              return true;
+          }
+        }
+      }
+      return false;
     }
-    
     return true;
   }
   

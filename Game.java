@@ -140,6 +140,25 @@ public class Game extends JFrame implements KeyListener {
           if(Game.flash())
             p.drawChar('X', new CharCol(Color.YELLOW), 1 + currow - scrollrow, 1 + curcol - scrollcol);
         }
+        
+        //Draw the look information screen
+        if(selectType == SELECT_LOOK) {
+          //Lines should be drawn at column 41, and starting at row 3
+          //First, figure out of there are units on this tile
+          Unit here = test.getLocationUnit(currow, curcol);
+          if(here != null) {
+            if(here instanceof Player)
+              p.drawString("That's you!", 3, 41);
+            else {
+              //It's a monster... draw its name and some stuff about it
+              Monster mon = (Monster)here;
+              p.drawString(mon.getName(), 3, 41);
+              p.drawString("Health: " + mon.getHealth() + "/" + mon.getMaxHealth(), 5, 41);
+            }
+          } else {
+            
+          }
+        }
       }
         
       //Flip buffer and repaint
@@ -186,7 +205,12 @@ public class Game extends JFrame implements KeyListener {
           test = new Map(100, 100);
           
           //Init the player (will be loaded from a file or something, but for now it is just a player)
-          player = new Player(10, 10, test);
+          for(int i = 0; i < test.getCols(); i++) {
+            if(test.getTile(10, i).isWalkable()) {
+              player = new Player(10, i, test);
+              break;
+            }
+          }
           //Spawn the player into the map
           test.spawnPlayer(player);
           
@@ -246,10 +270,10 @@ public class Game extends JFrame implements KeyListener {
             if(currow > 0) currow--;
           }
           if(k == 39) { //RIGHT
-            if(curcol < currentMap().getCols()) curcol++;
+            if(curcol < currentMap().getCols() - 1) curcol++;
           }
           if(k == 40) { //DOWN
-            if(currow < currentMap().getRows()) currow++;
+            if(currow < currentMap().getRows() - 1) currow++;
           }
           if(k == 10) { //ENTER
             postMessage(currow + " and " + curcol, new CharCol(Color.ORANGE));
