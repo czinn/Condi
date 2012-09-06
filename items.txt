@@ -1,0 +1,116 @@
+Short Sword=
+  mass:2,
+  range:1,
+  attack:0,
+  aspeed:0,
+  damage:0,
+  tags:melee+light+shortsword
+;
+Dagger=
+  mass:1,
+  range:1,
+  attack:5,
+  aspeed:-200,
+  damage:-2,
+  tags:melee+light+dagger
+;
+Hatchet=
+  mass:1,
+  range:1,
+  attack:3,
+  aspeed:0,
+  damage:-3,
+  tags:melee+light+axe+hatchet
+;
+Spear=
+  mass:1,
+  range:2,
+  attack:0,
+  aspeed:200,
+  damage:0,
+  tags:melee+light+spear
+;
+Bastard Sword=
+  mass:2,
+  range:1,
+  attack:0,
+  aspeed:100,
+  damage:4,
+  tags:melee+light+bastard
+;
+Long Sword=
+  mass:3,
+  range:1,
+  attack:0,
+  aspeed:110,
+  damage:6,
+  tags:melee+heavy+longsword
+;
+Mace=
+  mass:5,
+  range:2,
+  attack:-5,
+  aspeed:250,
+  damage:10,
+  tags:melee+heavy+mace
+;
+War Hammer=
+  mass:4,
+  range:1,
+  attack:-5,
+  aspeed:150,
+  damage:8,
+  tags:melee+heavy+hammer
+;
+War Axe=
+  mass:4,
+  range:1,
+  attack:-5,
+  aspeed:150,
+  damage:8,
+  tags:melee+heavy+axe+waraxe
+;
+Shortbow=
+  mass:2,
+  range:8,
+  attack:-10,
+  aspeed:200,
+  damage:0,
+  tags:ranged+bow+shortbow
+;
+Longbow=
+  mass:3,
+  range:24,
+  attack:-15,
+  aspeed:250,
+  damage:5,
+  tags:ranged+bow+longbow
+;
+Crossbow=
+  mass:2,
+  range:16,
+  attack:-10,
+  aspeed:400,
+  damage:10,
+  tags:ranged+crossbow
+;
+Cloth Cap=defense:1,mass:0,slot:head,tags:helmet+cap+cloth;
+Iron Helmet=defense:4,mass:1,slot:head,tags:helmet+iron;
+Steel Helmet=defense:5,mass:3,slot:head,tags:helmet+steel;
+Deepmetal Helmet=defense:6,mass:4,slot:head,tags:helmet+deep;
+Cloth Tunic=defense:1,mass:0,slot:body,tags:tunic+chestplate+cloth;
+Iron Chestplate=defense:6,mass:2,slot:body,tags:chestplate+iron;
+Steel Chestplate=defense:8,mass:4,slot:body,tags:chestplate+steel;
+Deepmetal Chestplate=defense:9,mass:5,slot:body,tags:chestplate+deep;
+Cloth Leggings=defense:4,mass:1,slot:legs,tags:leggings+cloth;
+Iron Leggings=defense:5,mass:2,slot:legs,tags:leggings+iron;
+Steel Leggings=defense:6,mass:3,slot:legs,tags:leggings+steel;
+Deepmetal Leggings=defense:7,mass:4,slot:legs,tags:leggings+deep;
+Cloth Boots=defense:2,mass:1,slot:feet,tags:boots+cloth;
+Iron Boots=defense:2,mass:1,slot:feet,tags:boots+iron;
+Steel Boots=defense:3,mass:2,slot:feet,tags:boots+steel;
+Deepmetal Boots=defense:4,mass:3,slot:feet,tags:boots+steel;
+Cloth Shoes=defense:1,mass:0,slot:feet,speed:-50,tags:shoes+cloth;
+Iron Shoes=defense:1,mass:0,slot:feet,speed:-100,tags:shoes+iron;
+Steel Shoes=defense:2,mass:2,slot:feet,speed:-150,tags:shoes+steel;
+Deepmetal Shoes=defense:2,mass:3,slot:feet,speed:-250,tags:shoes+deep;

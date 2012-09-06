@@ -218,7 +218,7 @@ public class Map {
   public int passTime() {
     TimeUser smallUser = null;
     for(TimeUser t : tus) {
-      if(smallUser == null || t.getTime() < smallUser.getTime()) {
+      if((smallUser == null || t.getTime() < smallUser.getTime()) && !t.isWaiting()) {
         smallUser = t;
       }
     }
@@ -231,8 +231,9 @@ public class Map {
     
     //Pass time for all users, and make moves if they reached 0
     for(TimeUser t : tus) {
+      t.setWaiting(false); //only waits for one turn
       t.passTime(timePass);
-      if(t.getTime() == 0 && !(t instanceof Player)) {
+      if(t.isReady() && !(t instanceof Player)) {
         t.takeTurn();
       }
     }
@@ -243,7 +244,7 @@ public class Map {
   
   /** If waiting for the player to make a move, returns true */
   public boolean waitingForPlayer() {
-    return getPlayer().getTime() == 0;
+    return getPlayer().isReady() && !getPlayer().isWaiting();
   }
   
   /** Returns the unit on the given tile, or null otherwise */
@@ -255,6 +256,30 @@ public class Map {
       }
     }
     return null;
+  }
+  
+  /** Removes dead units */
+  public void updateDead() {
+    Vector<TimeUser> deadThings = new Vector<TimeUser>();
+    for(TimeUser t : tus) {
+      if(t instanceof Unit) {
+        Unit u = (Unit)t;
+        if(u.isDead()) {
+          if(u instanceof Monster) {
+            deadThings.add(t);
+            //Drop loot
+            continue;
+          } else { //it's a player
+            //Deal with game loss here somehow, or mark the map as lost, idk
+            //For now, heal to full hp
+            u.heal(u.getMaxHealth() - u.getHealth());
+          }
+        }
+      }
+    }
+    for(TimeUser t : deadThings) {
+      tus.remove(t);
+    }
   }
   
   /** Draws part of the map, with the top left corner being positioned at (row, col)

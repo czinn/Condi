@@ -15,7 +15,7 @@ public class Monster extends Unit {
   }
   
   //The monster's turn has come, it should perform an action (like moving or attacking)
-  public void takeTurn() {
+  public void takeTurn() {    
     //Update the location of the player if we can see it
     if(getMap().sight(getRow(), getCol(), getMap().getPlayer().getRow(), getMap().getPlayer().getCol())) {
       playerRow = getMap().getPlayer().getRow();
@@ -34,10 +34,10 @@ public class Monster extends Unit {
       int oldCol = getCol();
       move(rowChange, colChange);
       if(getRow() == oldRow && getCol() == oldCol) {
-        addTime(1000);
+        setWaiting(true);
       }
     } else {
-      addTime(1000);
+      setWaiting(true);
     }
   }
   

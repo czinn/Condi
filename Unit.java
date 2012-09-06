@@ -36,6 +36,10 @@ public class Unit extends TimeUser {
     this.col = col;
   }
   
+  public boolean isDead() {
+    return getHealth() <= 0; 
+  }
+  
   public void damage(int amt) {
     health -= amt;
   }

@@ -114,8 +114,8 @@ public class Game extends JFrame implements KeyListener {
         //  test.passTime();
         
         //Does time really fast
-        while(!test.waitingForPlayer())
-         test.passTime();
+        while(!currentMap().waitingForPlayer())
+         currentMap().passTime();
         
         //Figure out the width and height of the map display
         int mapDisplayHeight = 46;
@@ -132,8 +132,11 @@ public class Game extends JFrame implements KeyListener {
           colScroll(curcol, mapDisplayWidth);
         }
         
+        //Update the map elements (kill stuff)
+        currentMap().updateDead();
+        
         //Draw the map
-        test.draw(p, 1, 1, 0 + scrollrow, 0 + scrollcol, mapDisplayHeight, mapDisplayWidth, player.getRow(), player.getCol());
+        currentMap().draw(p, 1, 1, 0 + scrollrow, 0 + scrollcol, mapDisplayHeight, mapDisplayWidth, player.getRow(), player.getCol());
         
         //Draw a cursor if one should be drawn
         if(selectType == SELECT_ATTACK || selectType == SELECT_LOOK) {
@@ -145,8 +148,8 @@ public class Game extends JFrame implements KeyListener {
         if(selectType == SELECT_LOOK) {
           //Lines should be drawn at column 41, and starting at row 3
           //First, figure out of there are units on this tile
-          Unit here = test.getLocationUnit(currow, curcol);
-          if(here != null) {
+          Unit here = currentMap().getLocationUnit(currow, curcol);
+          if(here != null && currentMap().sight(player.getRow(), player.getCol(), currow, curcol)) {
             if(here instanceof Player)
               p.drawString("That's you!", 3, 41);
             else {
@@ -250,6 +253,10 @@ public class Game extends JFrame implements KeyListener {
         if(k == 34) { //PAGEDOWN (NUMPAD DOWNRIGHT)
           if(player.isReady())
             player.move(1, 1);
+        }
+        if(k == 46) { //PERIOD (WAIT)
+          if(player.isReady())
+            player.setWaiting(true);
         }
         if(k == 76) { //L (LOOK)
           selectType = SELECT_LOOK;
