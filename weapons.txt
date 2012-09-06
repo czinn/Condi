@@ -1,0 +1,96 @@
+Short Sword=
+  mass:2,
+  range:1,
+  attack:0,
+  aspeed:0,
+  damage:0,
+  tags:melee+light+shortsword
+;
+Dagger=
+  mass:1,
+  range:1,
+  attack:5,
+  aspeed:-200,
+  damage:-2,
+  tags:melee+light+dagger
+;
+Hatchet=
+  mass:1,
+  range:1,
+  attack:3,
+  aspeed:0,
+  damage:-3,
+  tags:melee+light+axe+hatchet
+;
+Spear=
+  mass:1,
+  range:2,
+  attack:0,
+  aspeed:200,
+  damage:0,
+  tags:melee+light+spear
+;
+Bastard Sword=
+  mass:2,
+  range:1,
+  attack:0,
+  aspeed:100,
+  damage:4,
+  tags:melee+light+bastard
+;
+Long Sword=
+  mass:3,
+  range:1,
+  attack:0,
+  aspeed:110,
+  damage:6,
+  tags:melee+heavy+longsword
+;
+Mace=
+  mass:5,
+  range:2,
+  attack:-5,
+  aspeed:250,
+  damage:10,
+  tags:melee+heavy+mace
+;
+War Hammer=
+  mass:4,
+  range:1,
+  attack:-5,
+  aspeed:150,
+  damage:8,
+  tags:melee+heavy+hammer
+;
+War Axe=
+  mass:4,
+  range:1,
+  attack:-5,
+  aspeed:150,
+  damage:8,
+  tags:melee+heavy+axe+waraxe
+;
+Shortbow=
+  mass:2,
+  range:8,
+  attack:-10,
+  aspeed:200,
+  damage:0,
+  tags:ranged+bow+shortbow
+;
+Longbow=
+  mass:3,
+  range:24,
+  attack:-15,
+  aspeed:250,
+  damage:5,
+  tags:ranged+bow+longbow
+;
+Crossbow=
+  mass:2,
+  range:16,
+  attack:-10,
+  aspeed:400,
+  damage:10,
+  tags:ranged+crossbow
+;

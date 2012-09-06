@@ -39,6 +39,8 @@ public class Game extends JFrame implements KeyListener {
   int scrollrow;
   int scrollcol;
   
+  Info info;
+  
   public static void main(String[] args) {
     Game g = new Game();
   }
@@ -67,6 +69,10 @@ public class Game extends JFrame implements KeyListener {
     
     scrollrow = 0;
     scrollcol = 0;
+    
+    //Load the info!
+    info = new Info();
+    System.out.println(info.stats.get("Longbow").get("range"));
     
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
