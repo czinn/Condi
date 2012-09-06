@@ -4,15 +4,41 @@ import java.awt.*;
 public class Monster extends Unit {
   int type;
   
+  int playerRow;
+  int playerCol;
+  
   Monster(int level, int row, int col, Map map) {
     super(level, row, col, map);
     type = 0;
+    playerRow = -1;
+    playerCol = -1;
   }
   
   //The monster's turn has come, it should perform an action (like moving or attacking)
   public void takeTurn() {
-    //For now, move around randomly
-    move(Game.rand(-1, 2), Game.rand(-1, 2));
+    //Update the location of the player if we can see it
+    if(getMap().sight(getRow(), getCol(), getMap().getPlayer().getRow(), getMap().getPlayer().getCol())) {
+      playerRow = getMap().getPlayer().getRow();
+      playerCol = getMap().getPlayer().getCol();
+    }
+    
+    //Move towards the player or don't move at all
+    if(playerRow != -1) {
+      int rowChange = 0;
+      int colChange = 0;
+      if(playerRow > getRow()) rowChange = 1;
+      if(playerRow < getRow()) rowChange = -1;
+      if(playerCol > getCol()) colChange = 1;
+      if(playerCol < getCol()) colChange = -1;
+      int oldRow = getRow();
+      int oldCol = getCol();
+      move(rowChange, colChange);
+      if(getRow() == oldRow && getCol() == oldCol) {
+        addTime(1000);
+      }
+    } else {
+      addTime(1000);
+    }
   }
   
   /** Returns the name of the monster */

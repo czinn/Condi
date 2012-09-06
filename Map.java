@@ -260,14 +260,15 @@ public class Map {
   /** Draws part of the map, with the top left corner being positioned at (row, col)
     * The tile drawn at that position is the tile (srow, scol)
     * The box is (height, width) big
-    * Things not visible from (vr, vc) are greyed out; eventually they may not be drawn at all or something idk
+    * Things not visible from (vr, vc) are greyed out
     */
   public void draw(TextPanel p, int row, int col, int srow, int scol, int height, int width, int vr, int vc) {
     for(int r = 0; r < height; r++) {
       for(int c = 0; c < width; c++) {
         boolean visible = sight(vr, vc, srow + r, scol + c);
         Tile t = getTile(srow + r, scol + c);
-        char tc = visible ? t.getChar() : ' ';
+        if(!t.hasSeen() && visible) t.see();
+        char tc = visible || t.hasSeen() ? t.getChar() : ' ';
         CharCol tcc = visible ? t.getCol() : new CharCol(Color.WHITE, Color.GRAY);
         p.drawChar(tc, tcc, row + r, col + c);
       }
@@ -292,6 +293,8 @@ public class Map {
 class Tile {
   int type;
   int data;
+  
+  boolean seen;
   
   static int FLOOR = 0;
   static int WALL = 1;
@@ -346,7 +349,7 @@ class Tile {
     if(type == FLOOR)
       return new CharCol();
     if(type == WALL)
-      return new CharCol();
+      return new CharCol(Color.BLUE);
     if(type == PILLAR)
       return new CharCol();
     
@@ -375,5 +378,13 @@ class Tile {
     if(type == PILLAR) return false;
     
     return true;
+  }
+  
+  public boolean hasSeen() {
+    return seen;
+  }
+  
+  public void see() {
+    seen = true;
   }
 }

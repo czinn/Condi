@@ -276,7 +276,12 @@ public class Game extends JFrame implements KeyListener {
             if(currow < currentMap().getRows() - 1) currow++;
           }
           if(k == 10) { //ENTER
-            postMessage(currow + " and " + curcol, new CharCol(Color.ORANGE));
+            if(selectType == SELECT_ATTACK) {
+              Unit u = currentMap().getLocationUnit(currow, curcol);
+              if(u != null && !(u instanceof Player)) {
+                player.attack(u);
+              }
+            }
           }
           if(k == 27) { //ESCAPE
             selectType = SELECT_NONE;

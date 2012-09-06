@@ -8,7 +8,7 @@ public class Player extends Unit {
   
   /** Player is super fast for testing */
   public int getSpeed() {
-    return 200;
+    return 1000;
   }
   
   /** This still needs to account for items and other bonuses */

@@ -141,4 +141,9 @@ public class Unit extends TimeUser {
   public CharCol getCharCol() {
     return new CharCol(Color.CYAN);
   }
+  
+  /** Returns the map */
+  public Map getMap() {
+    return map;
+  }
 }
