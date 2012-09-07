@@ -8,11 +8,13 @@ public class Info {
   HashMap<String, HashMap<String, String>> stats; //some of the stats may be integers, but still stored as strings
   HashMap<String, Vector<String>> tags; //may be tags for the item, or tags usable by the monster/adjective; same dif
   HashMap<String, Vector<Effect>> effects; //adjectives only; list of effects
+  HashMap<String, String> types; //what type of thing each name is
   
   Info() {
     stats = new HashMap<String, HashMap<String, String>>();
     tags = new HashMap<String, Vector<String>>();
     effects = new HashMap<String, Vector<Effect>>();
+    types = new HashMap<String, String>();
     try {
       loadFile("weapons.txt", "weapon");
       loadFile("armor.txt", "armor");
@@ -37,6 +39,8 @@ public class Info {
         String[] o = obj[i].split("="); //split at the = separating the name of the thing from the data
         String name = o[0];
         String[] data = o[1].split(","); //commas separate the data sections
+        //Store the type
+        types.put(name, tp);
         //Make some variables to store the stats/tags/effects for this thing (effects only if loading from "adjs.txt")
         HashMap<String, String> stat = new HashMap<String, String>();
         Vector<String> tag = new Vector<String>();
@@ -62,5 +66,15 @@ public class Info {
         effects.put(name, effect);
       }
     }
+  }
+  
+  /** Gets a list of all names of whatever type specified */
+  public Vector<String> listOf(String tp) {
+    Vector<String> r = new Vector<String>();
+    for(String key : types.keySet()) {
+      if(types.get(key).equals(tp))
+        r.add(key);
+    }
+    return r;
   }
 }

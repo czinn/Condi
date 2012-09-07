@@ -30,20 +30,12 @@ Spear=
   damage:0,
   tags:melee+light+spear
 ;
-Bastard Sword=
-  mass:2,
-  range:1,
-  attack:0,
-  aspeed:100,
-  damage:4,
-  tags:melee+light+bastard
-;
 Long Sword=
   mass:3,
   range:1,
   attack:0,
   aspeed:110,
-  damage:6,
+  damage:5,
   tags:melee+heavy+longsword
 ;
 Mace=

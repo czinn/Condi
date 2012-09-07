@@ -72,10 +72,16 @@ public class Game extends JFrame implements KeyListener {
     
     //Load the info!
     info = new Info();
-    System.out.println(info.stats.get("Longbow").get("range"));
+    
+    for(int i = 0; i < 10; i++) {
+      Item tempitem = new Item(info, "weapon", info.tags.get("Goblin"));
+      System.out.println("A good weapon for a goblin would be a " + tempitem);
+      tempitem = new Item(info, "armor", info.tags.get("Goblin"));
+      System.out.println("A good piece of armor for a goblin would be " + tempitem);
+    }
     
     //Init menus
-    menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut"});
+    menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut", "Debug Option"});
     
     //Start the game
     run();
