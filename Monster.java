@@ -1,17 +1,28 @@
 import java.awt.*;
+import java.util.*;
 
 /** Contains information about a Monster */
 public class Monster extends Unit {
-  int type;
+  String type;
   
   int playerRow;
   int playerCol;
   
-  Monster(int level, int row, int col, Map map) {
-    super(level, row, col, map);
-    type = 0;
+  Monster(int level, int row, int col, Map map, Info info) {
+    super(level, row, col, map, info);
     playerRow = -1;
     playerCol = -1;
+    //Choose a monster of the correct level
+    Vector<String> possible = info.listOf("monster");
+    Vector<String> goodones = new Vector<String>();
+    for(String m : possible) {
+      int lolev = Integer.parseInt(info.stats.get(m).get("lolev"));
+      int hilev = Integer.parseInt(info.stats.get(m).get("hilev"));
+      if(lolev <= level && level <= hilev)
+        goodones.add(m);
+    }
+    type = goodones.get(Game.rand(0, goodones.size()));
+    
   }
   
   //The monster's turn has come, it should perform an action (like moving or attacking)
@@ -41,16 +52,8 @@ public class Monster extends Unit {
     }
   }
   
-  /** Returns the name of the monster */
   public String getName() {
-    return Monster.getName(type);
-  }
-  
-  public static String getName(int type) {
-    if(type == 0)
-      return "A Monster";
-    
-    return "You don't know what this is.";
+    return type;
   }
   
   /** Returns the character that should be used to represent the player */

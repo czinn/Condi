@@ -73,13 +73,6 @@ public class Game extends JFrame implements KeyListener {
     //Load the info!
     info = new Info();
     
-    for(int i = 0; i < 10; i++) {
-      Item tempitem = new Item(info, "weapon", info.tags.get("Goblin"));
-      System.out.println("A good weapon for a goblin would be a " + tempitem);
-      tempitem = new Item(info, "armor", info.tags.get("Goblin"));
-      System.out.println("A good piece of armor for a goblin would be " + tempitem);
-    }
-    
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut", "Debug Option"});
     
@@ -217,12 +210,12 @@ public class Game extends JFrame implements KeyListener {
         int sel = menuMain.getSelect();
         if(sel == 0) { //"Start"          
           //Init the test map
-          test = new Map(100, 100);
+          test = new Map(100, 100, info);
           
           //Init the player (will be loaded from a file or something, but for now it is just a player)
           for(int i = 0; i < test.getCols(); i++) {
             if(test.getTile(10, i).isWalkable()) {
-              player = new Player(10, i, test);
+              player = new Player(10, i, test, info);
               break;
             }
           }

@@ -1,4 +1,6 @@
 Goblin=
+  lolev:0,
+  hilev:10,
   attack:-5,
   defense:0,
   damage:0,
@@ -8,6 +10,8 @@ Goblin=
   tags:light+cloth+-shoes
 ;
 Kobold=
+  lolev:0,
+  hilev:5,
   attack:-5,
   defense:0,
   damage:0,

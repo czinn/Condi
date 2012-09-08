@@ -10,14 +10,21 @@ public class Unit extends TimeUser {
   int row;
   int col;
   
+  Inventory inv;
+  
+  Info info;
+  
   //Reference to the map this unit is on
   Map map;
   
-  Unit(int level, int row, int col, Map map) {
+  Unit(int level, int row, int col, Map map, Info info) {
     this.level = level;
     this.row = row;
     this.col = col;
     this.map = map;
+    this.info = info;
+    
+    inv = new Inventory();
     
     health = getMaxHealth();
   }
@@ -55,39 +62,39 @@ public class Unit extends TimeUser {
     return health;
   }
   
-  /** This still needs to account for items and other bonuses */
+  /** This still needs to account for items and other bonuses (or not) */
   public int getMaxHealth() {
     return 100 + 10 * level;
   }
   
   /** This still needs to account for items and other bonuses */
   public int getAttack() {
-    return 5 * level;
+    return 5 * level + inv.getAttack();
   }
   
   /** This still needs to account for items and other bonuses */
   public int getDefense() {
-    return 20 + 5 * level;
+    return 20 + 5 * level + inv.getDefense();
   }
   
   /** This still needs to account for items and other bonuses */
   public int getSpeed() {
-    return 1000;
+    return 1000 + inv.getSpeed() + inv.getSpeedMassDebuff();
   }
   
   /** This still needs to account for items and other bonuses */
   public int getDamage() {
-    return 20 + 20 * level;
+    return (20 + inv.getDamage()) * (level + 1);
   }
   
   /** This still needs to account for items and other bonuses */
   public int getAttackSpeed() {
-    return 800; //obviously a temp value
+    return 800 + inv.getASpeed();
   }
   
   /** This still needs to account for items and other bonuses */
   public int getRange() {
-    return 1;
+    return Math.max(1, inv.getRange());
   }
   
   /** Returns true if the unit is visible from this unit */
@@ -106,6 +113,7 @@ public class Unit extends TimeUser {
     if(inRange(u) && isVisible(u)) {
       addTime(getAttackSpeed());
       if(getAttack() + Game.rand(0, 100) >= u.getDefense()) { //attack hits
+        System.out.println("Hit!");
         u.damage(Game.rand((int)Math.round(0.75 * getDamage()), (int)Math.round(1.25 * getDamage())));
         return true;
       }

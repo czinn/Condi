@@ -11,10 +11,14 @@ public class Map {
   Tile[][] tiles;
   Vector<TimeUser> tus;
   
+  Info info;
+  
   static int SPLIT_MIN = 20;
   static int MIN_ROOM_SIZE = 8;
   
-  Map(int rows, int cols) {
+  Map(int rows, int cols, Info info) {
+    this.info = info;
+    
     tiles = new Tile[rows][cols];
     clear();
     
@@ -209,7 +213,7 @@ public class Map {
   
   /** Spawns a random monster on the map at the given position */
   public void spawnMonster(int level, int row, int col) {
-    tus.add(new Monster(level, row, col, this));
+    tus.add(new Monster(level, row, col, this, info));
   }
   
   /** Passes time for all TimeUsers equal to the smallest time among them.
