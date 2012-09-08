@@ -275,7 +275,7 @@ public class Map {
           if(u instanceof Monster) {
             deadThings.add(t);
             //Drop loot
-            if(Game.rand(0, 5) == 0) {
+            if(Game.rand(0, 1) == 0) {
               //Choose a random piece of loot from the inventory
               Item loot = u.getInv().items.get(Game.rand(0, u.getInv().items.size()));
               dropItem(loot, u.getRow(), u.getCol());

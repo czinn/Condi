@@ -22,6 +22,8 @@ public class Game extends JFrame implements KeyListener {
   static int GS_GAME = 1;
   
   Menu menuMain;
+  Menu menuInvEquip;
+  Menu menuInvBag;
   
   Map test;
   
@@ -35,6 +37,7 @@ public class Game extends JFrame implements KeyListener {
   static int SELECT_NONE = 0;
   static int SELECT_LOOK = 1;
   static int SELECT_ATTACK = 2;
+  static int SELECT_INV = 3;
   
   int scrollrow;
   int scrollcol;
@@ -75,6 +78,9 @@ public class Game extends JFrame implements KeyListener {
     
     //Init menus
     menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut", "Debug Option"});
+    menuMain.setActive(true);
+    menuInvEquip = new Menu(new String[]{"Empty"});
+    menuInvBag = new Menu(new String[]{"Empty"});
     
     //Start the game
     run();
@@ -171,14 +177,19 @@ public class Game extends JFrame implements KeyListener {
                 p.drawString("Legs: " + (mon.getInv().slotUse("legs") ? mon.getInv().getSlot("legs") : "None"), 10, 41);
                 p.drawString("Feet: " + (mon.getInv().slotUse("feet") ? mon.getInv().getSlot("feet") : "None"), 11, 41);
               }
-            } else {
-              //Look for an item
-              Item onTile = currentMap().getLocationItem(currow, curcol);
-              if(onTile != null) {
-                p.drawString(onTile.toString(), 3, 41);
-              }
+            }
+            //Look for an item
+            Item onTile = currentMap().getLocationItem(currow, curcol);
+            if(onTile != null) {
+              p.drawString(onTile.toString(), here == null ? 3 : 20, 41);
             }
           }
+        } else if(selectType == SELECT_INV) {
+          menuInvEquip.draw(p, new CharCol(), 0, 0, 38, 40);
+          menuInvBag.draw(p, new CharCol(), 0, 40, 38, 40);
+          p.drawString("Equipped", new CharCol(Color.WHITE, Color.GRAY), 0, 10);
+          p.drawString("Bag", new CharCol(Color.WHITE, Color.GRAY), 0, 50);
+          p.drawString("Enter: Equip/unequip item       D: Drop item", 36, 20);
         }
       }
         
@@ -221,7 +232,9 @@ public class Game extends JFrame implements KeyListener {
       }
       if(k == 10) { //ENTER (select)
         int sel = menuMain.getSelect();
-        if(sel == 0) { //"Start"          
+        if(sel == 0) { //"Start"
+          menuMain.setActive(false);
+          
           //Init the test map
           test = new Map(80, 80, info);
           
@@ -299,6 +312,12 @@ public class Game extends JFrame implements KeyListener {
             }
           }
         }
+        if(k == 73) { //I (INVENTORY)
+          selectType = SELECT_INV;
+          menuInvEquip.setActive(true);
+          menuInvBag.setActive(false);
+          updateInventoryMenus();
+        }
       } else { //In a menu or using a cursor of some sort; essentially, paused
         if(selectType == SELECT_LOOK || selectType == SELECT_ATTACK) { //cursor stuff
           if(k == 37) { //LEFT
@@ -318,15 +337,80 @@ public class Game extends JFrame implements KeyListener {
               Unit u = currentMap().getLocationUnit(currow, curcol);
               if(u != null && !(u instanceof Player)) {
                 player.attack(u);
+                selectType = SELECT_NONE;
               }
             }
           }
           if(k == 27) { //ESCAPE
             selectType = SELECT_NONE;
           }
+        } else if(selectType == SELECT_INV) { //in the inventory
+          if(k == 27) { //ESCAPE
+            selectType = SELECT_NONE;
+          }
+          if(k == 37) { //LEFT
+            menuInvEquip.setActive(true);
+            menuInvBag.setActive(false);
+          }
+          if(k == 38) { //UP
+            if(menuInvEquip.isActive())
+              menuInvEquip.selectUp();
+            else
+              menuInvBag.selectUp();
+          }
+          if(k == 39) { //RIGHT
+            menuInvEquip.setActive(false);
+            menuInvBag.setActive(true);
+          }
+          if(k == 40) { //DOWN
+            if(menuInvEquip.isActive())
+              menuInvEquip.selectDown();
+            else
+              menuInvBag.selectDown();
+          }
+          if(k == 10) { //ENTER
+            if(menuInvEquip.isActive()) {
+              if(menuInvEquip.options.size() > 0)
+                player.getInv().unequipItem(player.getInv().items.get(menuInvEquip.getSelect()));
+            } else {
+              if(menuInvBag.options.size() > 0)
+                player.getInv().equipItem(player.getInv().backpack.get(menuInvBag.getSelect()));
+            }
+            updateInventoryMenus();
+          }
+          if(k == 68) { //D (DROP)
+            Item toDrop = null;
+            if(menuInvEquip.isActive() && menuInvEquip.options.size() > 0) {
+              toDrop = player.getInv().items.get(menuInvEquip.getSelect());
+              player.getInv().items.remove(toDrop);
+            } else if(menuInvBag.isActive() && menuInvBag.options.size() > 0) {
+              toDrop = player.getInv().backpack.get(menuInvBag.getSelect());
+              player.getInv().backpack.remove(toDrop);
+            }
+            if(toDrop != null) {
+              currentMap().dropItem(toDrop, player.getRow(), player.getCol());
+              postMessage("You dropped: " + toDrop, new CharCol(Color.ORANGE));
+            }
+            updateInventoryMenus();
+          }
         }
       }
     }
+  }
+  
+  /** Updates the inventory menus so that they reflect the current inventory of the player */
+  public void updateInventoryMenus() {
+    Inventory inv = player.getInv();
+    String[] equip = new String[inv.items.size()];
+    for(int i = 0; i < equip.length; i++) {
+      equip[i] = inv.items.get(i).toString();
+    }
+    String[] bag = new String[inv.backpack.size()];
+    for(int i = 0; i < bag.length; i++) {
+      bag[i] = inv.backpack.get(i).toString();
+    }
+    menuInvEquip.updateOptions(equip);
+    menuInvBag.updateOptions(bag);
   }
   
   /** Modifies "scrollrow" such that the row "r" can be seen on the map display which is "display" rows high */

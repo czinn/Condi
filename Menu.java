@@ -1,16 +1,17 @@
 import java.awt.*;
+import java.util.*;
 
 /** Displays a menu. Designed to be displayed on whole screen, but can be displayed on part of screen.
   * 
   * @author Charles Zinn
   */
 public class Menu {
-  String[] options;
+  Vector<String> options;
   int select;
   boolean active;
   
   Menu(String[] options) {
-    this.options = options;
+    updateOptions(options);
     select = 0;
     active = false;
   }
@@ -21,34 +22,36 @@ public class Menu {
     */
   public void draw(TextPanel p, CharCol c, int row, int col, int height, int width) {
     //Ensure size is big enough
-    if(height >= numOptions() * 2 + 3 && width >= longOption() + 6) {
+    if(height >= options.size() * 2 + 3 && width >= longOption() + 6) {
+      p.fillBox(' ', c, row, col, height, width);
       //Draw border in gray
       p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), row, col, height, width);
       //Draw each menu element
-      for(int i = 0; i < numOptions(); i++) {
-        String op = getOption(i);
+      for(int i = 0; i < options.size(); i++) {
+        String op = options.get(i);
         p.drawString(op, c, row + 2 + i * 2, col + 4);
       }
-      //Draw the selector
-      p.drawChar('>', c, row + 2 + select * 2, col + 2);
+      if(active) //Draw the selector
+        p.drawChar('>', c, row + 2 + select * 2, col + 2);
     }
+  }
+  
+  public void updateOptions(String[] options) {
+    this.options = new Vector<String>();
+    for(int i = 0; i < options.length; i++)
+      this.options.add(options[i]);
+    
+    //Move selection
+    if(select >= this.options.size()) select = Math.max(this.options.size() - 1, 0);
   }
   
   public boolean isActive() {
     return active;
   }
   
-  public int numOptions() {
-    return options.length;
-  }
-  
-  public String getOption(int n) {
-    return options[n];
-  }
-  
   /** Moves the selection down one if possible */
   public void selectDown() {
-    if(select < numOptions() - 1)
+    if(select < options.size() - 1)
       select++;
   }
   
@@ -70,8 +73,8 @@ public class Menu {
   /** Returns the length of the longest option */
   public int longOption() {
     int longest = 0;
-    for(int i = 0; i < numOptions(); i++) {
-      int size = getOption(i).length();
+    for(int i = 0; i < options.size(); i++) {
+      int size = options.get(i).length();
       if(size > longest)
         size = longest;
     }
