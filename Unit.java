@@ -113,7 +113,6 @@ public class Unit extends TimeUser {
     if(inRange(u) && isVisible(u)) {
       addTime(getAttackSpeed());
       if(getAttack() + Game.rand(0, 100) >= u.getDefense()) { //attack hits
-        System.out.println("Hit!");
         u.damage(Game.rand((int)Math.round(0.75 * getDamage()), (int)Math.round(1.25 * getDamage())));
         return true;
       }
@@ -157,5 +156,10 @@ public class Unit extends TimeUser {
   /** Returns the map */
   public Map getMap() {
     return map;
+  }
+  
+  /** Returns the inventory */
+  public Inventory getInv() {
+    return inv;
   }
 }

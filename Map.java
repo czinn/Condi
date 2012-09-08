@@ -10,6 +10,7 @@ import java.util.Vector;
 public class Map {
   Tile[][] tiles;
   Vector<TimeUser> tus;
+  Vector<Item> items; //that have been dropped
   
   Info info;
   
@@ -35,6 +36,8 @@ public class Map {
     
     //Empty the TimeUser array
     tus = new Vector<TimeUser>();
+    //Empty the items array
+    items = new Vector<Item>();
   }
   
   public int getRows() {
@@ -272,6 +275,11 @@ public class Map {
           if(u instanceof Monster) {
             deadThings.add(t);
             //Drop loot
+            if(Game.rand(0, 5) == 0) {
+              //Choose a random piece of loot from the inventory
+              Item loot = u.getInv().items.get(Game.rand(0, u.getInv().items.size()));
+              dropItem(loot, u.getRow(), u.getCol());
+            }
             continue;
           } else { //it's a player
             //Deal with game loss here somehow, or mark the map as lost, idk
@@ -284,6 +292,32 @@ public class Map {
     for(TimeUser t : deadThings) {
       tus.remove(t);
     }
+  }
+  
+  /** Drops/spawns the given item at the given location */
+  public void dropItem(Item i, int row, int col) {
+    items.add(i);
+    i.setRow(row);
+    i.setCol(col);
+  }
+  
+  /** Finds the item at the given location */
+  public Item getLocationItem(int row, int col) {
+    for(Item i : items) {
+      if(i.getRow() == row && i.getCol() == col)
+        return i;
+    }
+    return null;
+  }
+  
+  /** Picks up (removes from the map) the item at location and returns it */
+  public Item pickupItem(int row, int col) {
+    Item i = getLocationItem(row, col);
+    if(i != null) {
+      items.remove(i);
+      return i;
+    } else
+      return null;
   }
   
   /** Draws part of the map, with the top left corner being positioned at (row, col)
@@ -300,6 +334,13 @@ public class Map {
         char tc = visible || t.hasSeen() ? t.getChar() : ' ';
         CharCol tcc = visible ? t.getCol() : new CharCol(Color.WHITE, Color.GRAY);
         p.drawChar(tc, tcc, row + r, col + c);
+      }
+    }
+    
+    //Draw items if they are visible
+    for(Item i : items) {
+      if(sight(vr, vc, i.getRow(), i.getCol())) {
+        p.drawChar('$', new CharCol(Color.YELLOW), row + i.getRow() - srow, col + i.getCol() - scol);
       }
     }
     

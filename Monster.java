@@ -22,7 +22,14 @@ public class Monster extends Unit {
         goodones.add(m);
     }
     type = goodones.get(Game.rand(0, goodones.size()));
-    
+    //Now choose a weapon and some armor for this guy
+    inv.addItem(new Item(info, "weapon", info.tags.get(type)));
+    //Add some armor
+    for(int i = 0; i < 4; i++) {
+      Item armor = new Item(info, "armor", info.tags.get(type));
+      if(!inv.slotUse(armor.getSlot()))
+        inv.addItem(armor);
+    }
   }
   
   //The monster's turn has come, it should perform an action (like moving or attacking)

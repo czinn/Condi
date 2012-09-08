@@ -47,7 +47,7 @@ public class Game extends JFrame implements KeyListener {
   
   Game() {
     super("Condi");
-    p = new TextPanel(50, 80);
+    p = new TextPanel(40, 80);
     this.add(p);
     this.pack();
     this.addKeyListener(this);
@@ -92,19 +92,19 @@ public class Game extends JFrame implements KeyListener {
       p.clear();
       
       //Draw a border, with a spot at the bottom for messages
-      p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 0, 0, 48, 80);
-      p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 47, 0, 3, 80);
+      p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 0, 0, 38, 80);
+      p.drawBox(' ', new CharCol(Color.GRAY, Color.GRAY), 37, 0, 3, 80);
 
       
       //Draw the message if there is one, and tick down message timer
       if(messageTime > 0) {
-        p.drawString(message, messageCol, 48, 3);
+        p.drawString(message, messageCol, 38, 3);
         messageTime--;
       }      
       
       if(gs == GS_MAIN_MENU) {
         //Draw the menu
-        menuMain.draw(p, new CharCol(), 0, 0, 48, 80);
+        menuMain.draw(p, new CharCol(), 0, 0, 38, 80);
       } else if(gs == GS_GAME) {
         /* Does time well
         //Tick down passTimeWait if it's more than 0; if it is 0, make a move if we're not waiting for the player
@@ -123,7 +123,7 @@ public class Game extends JFrame implements KeyListener {
          currentMap().passTime();
         
         //Figure out the width and height of the map display
-        int mapDisplayHeight = 46;
+        int mapDisplayHeight = 36;
         int mapDisplayWidth = 78;
         if(selectType == SELECT_LOOK)
           mapDisplayWidth = 39;
@@ -153,18 +153,31 @@ public class Game extends JFrame implements KeyListener {
         if(selectType == SELECT_LOOK) {
           //Lines should be drawn at column 41, and starting at row 3
           //First, figure out of there are units on this tile
-          Unit here = currentMap().getLocationUnit(currow, curcol);
-          if(here != null && currentMap().sight(player.getRow(), player.getCol(), currow, curcol)) {
-            if(here instanceof Player)
-              p.drawString("That's you!", 3, 41);
-            else {
-              //It's a monster... draw its name and some stuff about it
-              Monster mon = (Monster)here;
-              p.drawString(mon.getName(), 3, 41);
-              p.drawString("Health: " + mon.getHealth() + "/" + mon.getMaxHealth(), 5, 41);
+          if(currentMap().sight(player.getRow(), player.getCol(), currow, curcol)) {
+            Unit here = currentMap().getLocationUnit(currow, curcol);
+            if(here != null) {
+              if(here instanceof Player) {
+                //It's the player! Do a 'status screen'
+                p.drawString("Player", 3, 41);
+                p.drawString("Health: " + player.getHealth() + "/" + player.getMaxHealth(), 5, 41);
+              } else {
+                //It's a monster... draw its name and some stuff about it
+                Monster mon = (Monster)here;
+                p.drawString(mon.getName(), 3, 41);
+                p.drawString("Health: " + mon.getHealth() + "/" + mon.getMaxHealth(), 5, 41);
+                p.drawString("Weapon: " + mon.getInv().getSlot("weapon"), 7, 41);
+                p.drawString("Head: " + (mon.getInv().slotUse("head") ? mon.getInv().getSlot("head") : "None"), 8, 41);
+                p.drawString("Body: " + (mon.getInv().slotUse("body") ? mon.getInv().getSlot("body") : "None"), 9, 41);
+                p.drawString("Legs: " + (mon.getInv().slotUse("legs") ? mon.getInv().getSlot("legs") : "None"), 10, 41);
+                p.drawString("Feet: " + (mon.getInv().slotUse("feet") ? mon.getInv().getSlot("feet") : "None"), 11, 41);
+              }
+            } else {
+              //Look for an item
+              Item onTile = currentMap().getLocationItem(currow, curcol);
+              if(onTile != null) {
+                p.drawString(onTile.toString(), 3, 41);
+              }
             }
-          } else {
-            
           }
         }
       }
@@ -210,7 +223,7 @@ public class Game extends JFrame implements KeyListener {
         int sel = menuMain.getSelect();
         if(sel == 0) { //"Start"          
           //Init the test map
-          test = new Map(100, 100, info);
+          test = new Map(80, 80, info);
           
           //Init the player (will be loaded from a file or something, but for now it is just a player)
           for(int i = 0; i < test.getCols(); i++) {
@@ -272,6 +285,19 @@ public class Game extends JFrame implements KeyListener {
           selectType = SELECT_ATTACK;
           currow = player.getRow();
           curcol = player.getCol();
+        }
+        if(k == 71) { //G (GET/PICKUP)
+          //Check whether there is an item at player's location
+          Item onTile = currentMap().getLocationItem(player.getRow(), player.getCol());
+          if(onTile != null) {
+            //If there is space in player inventory
+            if(player.getInv().spaceFor(onTile)) {
+              player.getInv().addItem(currentMap().pickupItem(player.getRow(), player.getCol()));
+              postMessage("You got: " + onTile, new CharCol(Color.GREEN));
+            } else {
+              postMessage("You can't carry that!", new CharCol(Color.ORANGE));
+            }
+          }
         }
       } else { //In a menu or using a cursor of some sort; essentially, paused
         if(selectType == SELECT_LOOK || selectType == SELECT_ATTACK) { //cursor stuff
