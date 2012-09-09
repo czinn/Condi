@@ -2,6 +2,8 @@ import java.awt.*;
 
 /** Contains information about the player */
 public class Player extends Unit {
+  int xp;
+  
   Player(int row, int col, Map map, Info info) {
     super(0, row, col, map, info);
   }
@@ -24,5 +26,15 @@ public class Player extends Unit {
   /** Returns the character colour that should be used to represent the player */
   public CharCol getCharCol() {
     return new CharCol(Color.RED);
+  }
+  
+  public void giveXp(int xp) {
+    this.xp += xp;
+  }
+  public int getXp() {
+    return xp;
+  }
+  public void setXp(int xp) {
+    this.xp = xp;
   }
 }

@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.util.*;
 import java.awt.event.*;
 
 /** Main class for Condi
@@ -20,12 +21,16 @@ public class Game extends JFrame implements KeyListener {
   int sgs;
   static int GS_MAIN_MENU = 0;
   static int GS_GAME = 1;
+  static int GS_SELECT_SAVE = 2;
   
   Menu menuMain;
   Menu menuInvEquip;
   Menu menuInvBag;
+  Menu menuEscape;
+  Menu menuSaveSelect;
   
-  Map test;
+  Map dungeon;
+  Map vault;
   
   Player player;
   
@@ -38,11 +43,16 @@ public class Game extends JFrame implements KeyListener {
   static int SELECT_LOOK = 1;
   static int SELECT_ATTACK = 2;
   static int SELECT_INV = 3;
+  static int SELECT_ESCAPE = 4;
   
   int scrollrow;
   int scrollcol;
   
   Info info;
+  
+  String gameName; //a randomly generated name for the current game (also name of save file)
+  
+  boolean inDungeon;
   
   public static void main(String[] args) {
     Game g = new Game();
@@ -73,14 +83,20 @@ public class Game extends JFrame implements KeyListener {
     scrollrow = 0;
     scrollcol = 0;
     
+    inDungeon = false;
+    
     //Load the info!
     info = new Info();
     
     //Init menus
-    menuMain = new Menu(new String[]{"Start", "Stop", "test", "four", "wut", "Debug Option"});
+    menuMain = new Menu(new String[]{"New Game", "Continue Game", "test", "four", "wut", "Debug Option"});
     menuMain.setActive(true);
     menuInvEquip = new Menu(new String[]{"Empty"});
     menuInvBag = new Menu(new String[]{"Empty"});
+    menuEscape = new Menu(new String[]{"Empty"});
+    menuEscape.setActive(true);
+    menuSaveSelect = new Menu(new String[]{"Empty"});
+    menuSaveSelect.setActive(true);
     
     //Start the game
     run();
@@ -111,6 +127,9 @@ public class Game extends JFrame implements KeyListener {
       if(gs == GS_MAIN_MENU) {
         //Draw the menu
         menuMain.draw(p, new CharCol(), 0, 0, 38, 80);
+      } else if(gs == GS_SELECT_SAVE) {
+        //Draw the menu
+        menuSaveSelect.draw(p, new CharCol(), 0, 0, 38, 80);
       } else if(gs == GS_GAME) {
         /* Does time well
         //Tick down passTimeWait if it's more than 0; if it is 0, make a move if we're not waiting for the player
@@ -190,6 +209,9 @@ public class Game extends JFrame implements KeyListener {
           p.drawString("Equipped", new CharCol(Color.WHITE, Color.GRAY), 0, 10);
           p.drawString("Bag", new CharCol(Color.WHITE, Color.GRAY), 0, 50);
           p.drawString("Enter: Equip/unequip item       D: Drop item", 36, 20);
+        } else if(selectType == SELECT_ESCAPE) {
+          menuEscape.draw(p, new CharCol(), 0, 0, 38, 80);
+          p.drawString(WordGen.fCap(gameName), new CharCol(Color.RED), 2, 30);
         }
       }
         
@@ -232,24 +254,56 @@ public class Game extends JFrame implements KeyListener {
       }
       if(k == 10) { //ENTER (select)
         int sel = menuMain.getSelect();
-        if(sel == 0) { //"Start"
-          menuMain.setActive(false);
+        if(sel == 0) { //"New Game"
+          //Make the vault
+          createVault();
           
-          //Init the test map
-          test = new Map(80, 80, info);
+          player = new Player(0, 0, currentMap(), info);
           
-          //Init the player (will be loaded from a file or something, but for now it is just a player)
-          for(int i = 0; i < test.getCols(); i++) {
-            if(test.getTile(10, i).isWalkable()) {
-              player = new Player(10, i, test, info);
-              break;
-            }
-          }
-          //Spawn the player into the map
-          test.spawnPlayer(player);
+          //Spawn the player into the vault
+          vault.spawnPlayer(player);
+          
+          inDungeon = false;
+          
+          //Make a random name
+          gameName = WordGen.ss(2);
           
           gs = GS_GAME;
+        } else if(sel == 1) { //"Continue Game"
+          //Get a list of all the saves
+          File folder = new File("saves");
+          File[] fileList = folder.listFiles();
+          Vector<String> saveFiles = new Vector<String>();
+          for(int i = 0; i < fileList.length; i++) {
+            if(fileList[i].isFile()) {
+              String fn = fileList[i].getName();
+              if(fn.endsWith(".txt")) {
+                saveFiles.add(WordGen.fCap(fn.substring(0, fn.length() - 4)));
+              }
+            }
+          }
+          menuSaveSelect.updateOptions(saveFiles.toArray(new String[1]));
+          if(saveFiles.size() > 0) {
+            gs = GS_SELECT_SAVE;
+          } else {
+            postMessage("There aren't any saved games.", new CharCol(Color.RED));
+          }
         }
+      }
+    } else if(gs == GS_SELECT_SAVE) {
+      if(k == 38) { //UP
+        menuSaveSelect.selectUp();
+      }
+      if(k == 40) { //DOWN
+        menuSaveSelect.selectDown();
+      }
+      if(k == 10) { //ENTER
+        String fn = menuSaveSelect.options.get(menuSaveSelect.getSelect());
+        loadGame(fn.toLowerCase());
+        gs = GS_GAME;
+      }
+      if(k == 27) {
+        gs = GS_MAIN_MENU;
       }
     } else if(gs == GS_GAME) {
       if(selectType == SELECT_NONE) { //Moving around the map; essentially, not paused
@@ -318,11 +372,35 @@ public class Game extends JFrame implements KeyListener {
           menuInvBag.setActive(false);
           updateInventoryMenus();
         }
+        if(k == 69) { //E (ENTER)
+          Tile t = currentMap().getTile(player.getRow(), player.getCol());
+          if(t.getType() == Tile.ENTER_DUNGEON) {
+            //Create a dungeon at the player's level and move them into it
+            dungeon = new Map(80, 80, info);
+            dungeon.generateDungeon(player.getLevel(), 0, 0, 80, 80);
+            player.changeMap(dungeon);
+            dungeon.spawnPlayer(player);
+            inDungeon = true;
+          } else if(t.getType() == Tile.EXIT_DUNGEON) {
+            //Move the player back into the vault
+            player.changeMap(vault);
+            vault.spawnPlayer(player);
+            inDungeon = false;
+          }
+        }
+        if(k == 27) { //ESCAPE (ESCAPE MENU)
+          selectType = SELECT_ESCAPE;
+          if(inDungeon) {
+            menuEscape.updateOptions(new String[]{"Surrender to Death", "Return to Game"});
+          } else {
+            menuEscape.updateOptions(new String[]{"Save", "Return to Game"});
+          }
+        }
       } else { //In a menu or using a cursor of some sort; essentially, paused
         if(selectType == SELECT_LOOK || selectType == SELECT_ATTACK) { //cursor stuff
           if(k == 37) { //LEFT
             if(curcol > 0) curcol--;
-          }
+          } 
           if(k == 38) { //UP
             if(currow > 0) currow--;
           }
@@ -393,6 +471,32 @@ public class Game extends JFrame implements KeyListener {
             }
             updateInventoryMenus();
           }
+        } else if(selectType == SELECT_ESCAPE) { //In the escape menu
+          if(k == 38) { //UP
+            menuEscape.selectUp();
+          }
+          if(k == 40) { //DOWN
+            menuEscape.selectDown();
+          }
+          if(k == 27) { //ESCAPE
+            selectType = SELECT_NONE;
+          }
+          if(k == 10) { //ENTER
+            if(menuEscape.getSelect() == 1)
+              selectType = SELECT_NONE;
+            else {
+              if(inDungeon) {
+                //Delete the save file
+                //...
+              } else {
+                postMessage("Saving...", new CharCol());
+                saveGame();
+                postMessage("Save successful.", new CharCol());
+              }
+              gs = GS_MAIN_MENU;
+              selectType = SELECT_NONE;
+            }
+          }
         }
       }
     }
@@ -433,8 +537,10 @@ public class Game extends JFrame implements KeyListener {
 
   /** Returns a reference to the current map */
   public Map currentMap() {
-    //for now, there is only one map
-    return test;
+    if(inDungeon)
+      return dungeon;
+    else
+      return vault;
   }
   
   /** Handle the key-released event */
@@ -450,5 +556,101 @@ public class Game extends JFrame implements KeyListener {
   /** If something should be flashing on the display, it should be drawn whenever this is true and not when this is false */
   public static boolean flash() {
     return System.currentTimeMillis() % 800 < 400;
+  }
+  
+  /** Creates an empty vault (created when a new game is started, or when a game is reloaded) */
+  public void createVault() {
+    vault = new Map(80, 80, info);
+    for(int i = 0; i < vault.getRows(); i++) {
+      for(int j = 0; j < vault.getCols(); j++) {
+        if(i != 0 && i != vault.getRows() - 1 && j != 0 && j != vault.getCols() - 1)
+          vault.getTile(i, j).setType(Tile.FLOOR);
+      }
+    }
+    vault.getTile(vault.getRows() / 2, vault.getCols() / 2).setType(Tile.ENTER_DUNGEON);
+  }
+  
+  /** Saves the game to the game file */
+  public void saveGame() {
+    try {
+      PrintStream out = new PrintStream(new FileOutputStream("saves/" + gameName + ".txt"));
+      //Sections are delimited by a new line
+      //Sections must be in the right order or bad things will happen because bad things should happen when files
+      // get corrupted
+      //Section 1: Player level,player xp
+      out.println(player.getLevel() + "," + player.getXp());
+      //Section 2: Player equip inventory. Items separated by commas
+      String inv = "";
+      for(Item i : player.getInv().items) {
+        inv += i.getSaveName() + ",";
+      }
+      System.out.println(inv);
+      out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
+      //Section 3: Player backpack. See Section 2 for format.
+      inv = "";
+      for(Item i : player.getInv().backpack) {
+        inv += i.getSaveName() + ",";
+      }
+      System.out.println(inv);
+      out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
+      //Section 4: All items in the vault. Stored like "Item Name:row:col,"
+      inv = "";
+      for(Item i : vault.items) {
+        inv += i.getSaveName() + ":" + i.getRow() + ":" + i.getCol() + ",";
+      }
+      System.out.println(inv);
+      out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
+      //Done
+      out.close();
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  /** Loads the game from the game file */
+  public void loadGame(String name) {
+    gameName = name;
+    try {
+      Scanner s = new Scanner(new FileInputStream("saves/" + gameName + ".txt"));
+      //Make the vault
+      createVault();
+      
+      player = new Player(0, 0, currentMap(), info);
+      
+      //Load the player's level and xp
+      String[] sec1 = s.nextLine().split(",");
+      player.setLevel(Integer.parseInt(sec1[0]));
+      player.setXp(Integer.parseInt(sec1[1]));
+      
+      //Load the player's equipment
+      String[] sec2 = s.nextLine().split(",");
+      for(int i = 0; i < sec2.length; i++) {
+        if(!sec2[i].equals(""))
+          player.getInv().items.add(new Item(info, sec2[i]));
+      }
+      
+      //Load the player's backpack
+      String[] sec3 = s.nextLine().split(",");
+      for(int i = 0; i < sec3.length; i++) {
+        if(!sec3[i].equals(""))
+          player.getInv().backpack.add(new Item(info, sec3[i]));
+      }
+      
+      //Load the items in the vault
+      String[] sec4 = s.nextLine().split(",");
+      for(int i = 0; i < sec4.length; i++) {
+        if(!sec4[i].equals("")) {
+          String[] it = sec4[i].split(":");
+          vault.dropItem(new Item(info, it[0]), Integer.parseInt(it[1]), Integer.parseInt(it[2]));
+        }
+      }
+      
+      //Spawn the player into the vault
+      vault.spawnPlayer(player);
+      
+      inDungeon = false;
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
   }
 }

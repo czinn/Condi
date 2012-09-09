@@ -43,6 +43,13 @@ public class Unit extends TimeUser {
     this.col = col;
   }
   
+  public int getLevel() {
+    return level;
+  }
+  public void setLevel(int level) {
+    this.level = level;
+  }
+  
   public boolean isDead() {
     return getHealth() <= 0; 
   }
@@ -156,6 +163,11 @@ public class Unit extends TimeUser {
   /** Returns the map */
   public Map getMap() {
     return map;
+  }
+  
+  /** Teleports the player to another map */
+  public void changeMap(Map map) {
+    this.map = map;
   }
   
   /** Returns the inventory */

@@ -14,6 +14,8 @@ public class Map {
   
   Info info;
   
+  boolean hasExit;
+  
   static int SPLIT_MIN = 20;
   static int MIN_ROOM_SIZE = 8;
   
@@ -22,11 +24,10 @@ public class Map {
     
     tiles = new Tile[rows][cols];
     clear();
-    
-    generateDungeon(0, 0, rows, cols);
   }
   
   public void clear() {
+    hasExit = false;
     tiles = new Tile[getRows()][getCols()];
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
@@ -55,7 +56,7 @@ public class Map {
   /** Recursively generates a dungeon map inside the given box
     * Map should be clear()ed beforehand
     */
-  public void generateDungeon(int row, int col, int height, int width) {
+  public void generateDungeon(int level, int row, int col, int height, int width) {
     //At least one dimension must be over SPLIT_MIN (dimensions under SPLIT_MIN should not be split)
     if(height >= SPLIT_MIN || width >= SPLIT_MIN) {
       boolean vertSplit = Game.rand(0, 2) == 0; //whether the seperation line is vertical or horizontal (random)
@@ -64,8 +65,8 @@ public class Map {
       
       if(vertSplit) { //splitting vertically
         int splitLine = Game.rand(MIN_ROOM_SIZE, width - MIN_ROOM_SIZE);
-        generateDungeon(row, col, height, splitLine);
-        generateDungeon(row, col + splitLine, height, width - splitLine);
+        generateDungeon(level, row, col, height, splitLine);
+        generateDungeon(level, row, col + splitLine, height, width - splitLine);
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, height - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int colIndex = col + splitLine;
@@ -80,8 +81,8 @@ public class Map {
         }
       } else { //splitting horizontally
         int splitLine = Game.rand(MIN_ROOM_SIZE, height - MIN_ROOM_SIZE);
-        generateDungeon(row, col, splitLine, width);
-        generateDungeon(row + splitLine, col, height - splitLine, width);
+        generateDungeon(level, row, col, splitLine, width);
+        generateDungeon(level, row + splitLine, col, height - splitLine, width);
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, width - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int rowIndex = row + splitLine;
@@ -118,9 +119,15 @@ public class Map {
         getTile(rmrow + rmheight - 4, rmcol + rmwidth - 4).setType(Tile.PILLAR);
         getTile(rmrow + rmheight - 4, rmcol + 3).setType(Tile.PILLAR);
       }
-      //Spawn monsters and/or loot in the room (depending on size)
-      //For now, spawn one monster right in the middle
-      spawnMonster(0, rmrow + rmheight / 2, rmcol + rmwidth / 2);
+      //Put a monster in or the exit
+      if(Game.rand(0, 5) == 0 && !hasExit) {
+        hasExit = true;
+        getTile(rmrow + rmheight / 2, rmcol + rmwidth / 2).setType(Tile.EXIT_DUNGEON);
+      } else {
+        //Spawn monsters and/or loot in the room (depending on size)
+        //For now, spawn one monster right in the middle
+        spawnMonster(level, rmrow + rmheight / 2, rmcol + rmwidth / 2);
+      }
     }
   }
   
@@ -210,8 +217,21 @@ public class Map {
   
   /** Spawns a player into the map (only works if there is no player in the map currently (there can only be one) */
   public void spawnPlayer(Player p) {
-    if(getPlayer() == null)
+    if(getPlayer() == null) {
       tus.add(p);
+    }
+    
+    //Find the dungeon entrance or exit and spawn them on it
+    for(int i = 0; i < getRows(); i++) {
+      for(int j = 0; j < getCols(); j++) {
+        if(getTile(i, j).getType() == Tile.ENTER_DUNGEON || getTile(i, j).getType() == Tile.EXIT_DUNGEON) {
+          p.setRow(i);
+          p.setCol(j);
+          i = getRows();
+          j = getCols();
+        }
+      }
+    }
   }
   
   /** Spawns a random monster on the map at the given position */
@@ -369,6 +389,8 @@ class Tile {
   static int FLOOR = 0;
   static int WALL = 1;
   static int PILLAR = 2;
+  static int ENTER_DUNGEON = 3;
+  static int EXIT_DUNGEON = 4;
   
   Tile(int type) {
     this(type, 0);
@@ -407,6 +429,10 @@ class Tile {
       return '#';
     if(type == PILLAR)
       return 'O';
+    if(type == ENTER_DUNGEON)
+      return '>';
+    if(type == EXIT_DUNGEON)
+      return '<';
     
     return '?';
   }
@@ -422,6 +448,10 @@ class Tile {
       return new CharCol(Color.BLUE);
     if(type == PILLAR)
       return new CharCol();
+    if(type == ENTER_DUNGEON)
+      return new CharCol();
+    if(type == EXIT_DUNGEON)
+      return new CharCol();
     
     return new CharCol();
   }
@@ -434,6 +464,8 @@ class Tile {
     if(type == FLOOR) return false;
     if(type == WALL) return true;
     if(type == PILLAR) return true;
+    if(type == ENTER_DUNGEON) return false;
+    if(type == EXIT_DUNGEON) return false;
     
     return false;
   }
@@ -446,6 +478,8 @@ class Tile {
     if(type == FLOOR) return true;
     if(type == WALL) return false;
     if(type == PILLAR) return false;
+    if(type == ENTER_DUNGEON) return true;
+    if(type == EXIT_DUNGEON) return true;
     
     return true;
   }
