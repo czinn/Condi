@@ -73,7 +73,7 @@ public class Unit extends TimeUser {
   
   /** This still needs to account for items and other bonuses (or not) */
   public int getMaxHealth() {
-    return 100 + 10 * level;
+    return 100 + 30 * level;
   }
   
   /** This still needs to account for items and other bonuses */

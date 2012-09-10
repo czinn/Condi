@@ -76,12 +76,33 @@ public class Monster extends Unit {
   
   /** Returns the character that should be used to represent the player */
   public char getChar() {
-    return '&';
+    return info.stats.get(type).get("disp").charAt(0);
   }
   
   /** Returns the character colour that should be used to represent the player */
   public CharCol getCharCol() {
-    return new CharCol(Color.GREEN);
+    String c = info.stats.get(type).get("disp").substring(1);
+    Color cc = Color.WHITE;
+    if(c.equals("blue"))
+      cc = Color.BLUE;
+    else if(c.equals("cyan"))
+      cc = Color.CYAN;
+    else if(c.equals("green"))
+      cc = Color.GREEN;
+    else if(c.equals("magenta"))
+      cc = Color.MAGENTA;
+    else if(c.equals("orange"))
+      cc = Color.ORANGE;
+    else if(c.equals("pink"))
+      cc = Color.PINK;
+    else if(c.equals("red"))
+      cc = Color.RED;
+    else if(c.equals("white"))
+      cc = Color.WHITE;
+    else if(c.equals("yellow"))
+      cc = Color.YELLOW;
+    
+    return new CharCol(cc);
   }
 }
 
