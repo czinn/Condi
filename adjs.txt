@@ -12,3 +12,45 @@ Heavy=
   mass:1,
   effect:40:stun:4000:0
 ;
+Poisoned=
+  tags:light+heavy+ranged,
+  effect:20:poison:10000:5
+;
+Severing=
+  tags:light+longsword,
+  effect:50:weaken:5000:5
+;
+Ghostly=
+  tags:melee,
+  effect:40:confuse:2500:15
+;
+Echoing=
+  tags:heavy,
+  effect:30:daze:4000:20
+;
+Tangling=
+  tags:light+heavy,
+  effect:40:snare:1000:0
+;
+Accurate=
+  tags:melee+ranged,
+  attack:30
+;
+Powerful=
+  tags:melee+ranged,
+  damage:5
+;
+Defensive=
+  tags:melee,
+  defense:20
+;
+Swift=
+  tags:melee+ranged+-heavy,
+  aspeed:-200
+;
+Golden=
+  tags:melee+ranged,
+  damage:-5,
+  effect:30:stun:500:0,
+  effect:40:snare:200:0
+;

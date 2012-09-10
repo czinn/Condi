@@ -222,7 +222,7 @@ public class Game extends JFrame implements KeyListener, WindowListener {
                 p.drawString("Player", 3, 41);
                 p.drawString("Health: " + player.getHealth() + "/" + player.getMaxHealth(), 5, 41);
                 p.drawString("Level: " + player.getLevel(), 6, 41);
-                p.drawString("XP: " + player.getXp() + "/" + Player.xpLevel(player.getXp()), 7, 41);
+                p.drawString("XP: " + player.getXp() + "/" + Player.xpLevel(player.getLevel()), 7, 41);
                 
                 p.drawString("Surges Left: " + player.surges, 8, 41);
                 
