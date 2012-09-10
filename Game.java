@@ -8,20 +8,24 @@ import java.awt.event.*;
  * 
  * @author Charles Zinn
  */
-public class Game extends JFrame implements KeyListener {
+public class Game extends JFrame implements KeyListener, WindowListener {
   public static int FPS = 60;
   
   TextPanel p;
   
-  String message;
-  CharCol messageCol;
+  Vector<String> message;
+  Vector<CharCol> messageCol;
   int messageTime;
+  int messageNum;
   
   int gs;
   int sgs;
   static int GS_MAIN_MENU = 0;
   static int GS_GAME = 1;
   static int GS_SELECT_SAVE = 2;
+  static int GS_GAME_OVER = 3;
+  static int GS_INSTRUCTIONS = 4;
+  static int GS_CREDITS = 5;
   
   Menu menuMain;
   Menu menuInvEquip;
@@ -64,12 +68,14 @@ public class Game extends JFrame implements KeyListener {
     this.add(p);
     this.pack();
     this.addKeyListener(this);
+    this.addWindowListener(this);
     this.setVisible(true);
     
     //Init game varibles
-    message = "";
+    message = new Vector<String>();
     messageTime = 0;
-    messageCol = new CharCol();
+    messageCol = new Vector<CharCol>();
+    messageNum = 0;
     
     gs = GS_MAIN_MENU;
     sgs = 0;
@@ -86,10 +92,10 @@ public class Game extends JFrame implements KeyListener {
     inDungeon = false;
     
     //Load the info!
-    info = new Info();
+    info = new Info(this);
     
     //Init menus
-    menuMain = new Menu(new String[]{"New Game", "Continue Game", "test", "four", "wut", "Debug Option"});
+    menuMain = new Menu(new String[]{"New Game", "Continue Game", "Instructions", "Credits"});
     menuMain.setActive(true);
     menuInvEquip = new Menu(new String[]{"Empty"});
     menuInvBag = new Menu(new String[]{"Empty"});
@@ -120,9 +126,20 @@ public class Game extends JFrame implements KeyListener {
       
       //Draw the message if there is one, and tick down message timer
       if(messageTime > 0) {
-        p.drawString(message, messageCol, 38, 3);
+        p.drawString(message.get(messageNum), messageCol.get(messageNum), 38, 3);
+        if(message.size() - 1 > messageNum)
+          p.drawString("More...", new CharCol(), 38, 72);
         messageTime--;
-      }      
+      }
+      if(messageTime <= 0) {
+        if(messageNum < message.size() - 2) {
+          messageNum++;
+          messageTime = 1 * FPS;
+        } else if(messageNum == message.size() - 2) {
+          messageNum++;
+          messageTime = 5 * FPS;
+        }
+      }
       
       if(gs == GS_MAIN_MENU) {
         //Draw the menu
@@ -130,6 +147,25 @@ public class Game extends JFrame implements KeyListener {
       } else if(gs == GS_SELECT_SAVE) {
         //Draw the menu
         menuSaveSelect.draw(p, new CharCol(), 0, 0, 38, 80);
+      } else if(gs == GS_GAME_OVER) {
+        p.drawString("GAME OVER", 15, 36);
+        p.drawString("Press space to continue...", 17, 27);
+      } else if(gs == GS_CREDITS) {
+        p.drawString("Credits", 2, 37);
+        p.drawString("Condi was created Monday September 3rd, 2012 to Sunday September 9th, 2012", 4, 2);
+        p.drawString("All credit goes to Charles Zinn", 5, 2);
+        p.drawString("That's about it. This is version 1.0.", 7, 2);
+      } else if(gs == GS_INSTRUCTIONS) {
+        p.drawString("Instructions", 2, 35);
+        p.drawString("Arrow keys: Move/Attack", 4, 2);
+        p.drawString("L: Look/Status", 5, 2);
+        p.drawString("A: Attack", 6, 2);
+        p.drawString("G: Pick up item", 7, 2);
+        p.drawString("E: Enter or exit dungeon", 8, 2);
+        p.drawString("Escape: Menu", 9, 2);
+        p.drawString("Period: Wait", 10, 2);
+        p.drawString("I: Inventory", 11, 2);
+        p.drawString("H: Spend surge (heal to full) (5 surges per dungeon)", 12, 2);
       } else if(gs == GS_GAME) {
         /* Does time well
         //Tick down passTimeWait if it's more than 0; if it is 0, make a move if we're not waiting for the player
@@ -185,16 +221,25 @@ public class Game extends JFrame implements KeyListener {
                 //It's the player! Do a 'status screen'
                 p.drawString("Player", 3, 41);
                 p.drawString("Health: " + player.getHealth() + "/" + player.getMaxHealth(), 5, 41);
+                p.drawString("Level: " + player.getLevel(), 6, 41);
+                p.drawString("XP: " + player.getXp() + "/" + Player.xpLevel(player.getXp()), 7, 41);
+                
+                p.drawString("Surges Left: " + player.surges, 8, 41);
+                
+                if(player.ailment != null)
+                  p.drawString(player.ailment.getEnglish(), new CharCol(Color.RED), 10, 41);
               } else {
                 //It's a monster... draw its name and some stuff about it
                 Monster mon = (Monster)here;
-                p.drawString(mon.getName(), 3, 41);
+                p.drawString("Level " + mon.getLevel() + " " + mon.getName(), 3, 41);
                 p.drawString("Health: " + mon.getHealth() + "/" + mon.getMaxHealth(), 5, 41);
                 p.drawString("Weapon: " + mon.getInv().getSlot("weapon"), 7, 41);
                 p.drawString("Head: " + (mon.getInv().slotUse("head") ? mon.getInv().getSlot("head") : "None"), 8, 41);
                 p.drawString("Body: " + (mon.getInv().slotUse("body") ? mon.getInv().getSlot("body") : "None"), 9, 41);
                 p.drawString("Legs: " + (mon.getInv().slotUse("legs") ? mon.getInv().getSlot("legs") : "None"), 10, 41);
                 p.drawString("Feet: " + (mon.getInv().slotUse("feet") ? mon.getInv().getSlot("feet") : "None"), 11, 41);
+                if(mon.ailment != null)
+                  p.drawString(mon.ailment.getEnglish(), new CharCol(Color.RED), 13, 41);
               }
             }
             //Look for an item
@@ -213,6 +258,11 @@ public class Game extends JFrame implements KeyListener {
           menuEscape.draw(p, new CharCol(), 0, 0, 38, 80);
           p.drawString(WordGen.fCap(gameName), new CharCol(Color.RED), 2, 30);
         }
+        
+        //Display player health along bottom of window
+        int healthy = (int)Math.round(80 * (player.getHealth() / (player.getMaxHealth() + 0.0)));
+        p.fillBox(' ', new CharCol(Color.GREEN, Color.GREEN), 39, 0, 39, healthy);
+        p.fillBox(' ', new CharCol(Color.RED, Color.RED), 39, healthy, 39, 80);
       }
         
       //Flip buffer and repaint
@@ -230,9 +280,13 @@ public class Game extends JFrame implements KeyListener {
   
   /** Posts a message in the given colour to the message box at bottom of screen */
   public void postMessage(String m, CharCol c) {
-    message = m;
-    messageCol = c;
-    messageTime = 5 * FPS;
+    message.add(m);
+    messageCol.add(c);
+    if(messageNum < message.size() - 1)
+      messageTime -= 4 * FPS;
+    else {
+      messageTime = 5 * FPS;
+    }
   }
   
   /** Handle the key typed event */
@@ -243,7 +297,6 @@ public class Game extends JFrame implements KeyListener {
   /** Handle the key-pressed event */
   public void keyPressed(KeyEvent e) {
     int k = e.getKeyCode();
-    postMessage("Pressed " + k, new CharCol());
     
     if(gs == GS_MAIN_MENU) {
       if(k == 38) { //UP
@@ -288,6 +341,10 @@ public class Game extends JFrame implements KeyListener {
           } else {
             postMessage("There aren't any saved games.", new CharCol(Color.RED));
           }
+        } else if(sel == 2) { //"Instructions"
+          gs = GS_INSTRUCTIONS;
+        } else if(sel == 3) { //"Credits"
+          gs = GS_CREDITS;
         }
       }
     } else if(gs == GS_SELECT_SAVE) {
@@ -302,6 +359,14 @@ public class Game extends JFrame implements KeyListener {
         loadGame(fn.toLowerCase());
         gs = GS_GAME;
       }
+      if(k == 27) {
+        gs = GS_MAIN_MENU;
+      }
+    } else if(gs == GS_GAME_OVER) {
+      if(k == 32 || k == 27) { //SPACE
+        gs = GS_MAIN_MENU;
+      }
+    } else if(gs == GS_INSTRUCTIONS || gs == GS_CREDITS) {
       if(k == 27) {
         gs = GS_MAIN_MENU;
       }
@@ -377,16 +442,21 @@ public class Game extends JFrame implements KeyListener {
           if(t.getType() == Tile.ENTER_DUNGEON) {
             //Create a dungeon at the player's level and move them into it
             dungeon = new Map(80, 80, info);
-            dungeon.generateDungeon(player.getLevel(), 0, 0, 80, 80);
+            dungeon.generateDungeon(player.getLevel(), 0, 0, 80, 80, true, true);
             player.changeMap(dungeon);
             dungeon.spawnPlayer(player);
             inDungeon = true;
+            player.setSurges(5);
           } else if(t.getType() == Tile.EXIT_DUNGEON) {
             //Move the player back into the vault
             player.changeMap(vault);
             vault.spawnPlayer(player);
             inDungeon = false;
+            player.heal(player.getMaxHealth() - player.getHealth());
           }
+        }
+        if(k == 72) { //H (HEALING SURGE)
+          player.spendSurge();
         }
         if(k == 27) { //ESCAPE (ESCAPE MENU)
           selectType = SELECT_ESCAPE;
@@ -487,13 +557,13 @@ public class Game extends JFrame implements KeyListener {
             else {
               if(inDungeon) {
                 //Delete the save file
-                //...
+                endGame();
               } else {
                 postMessage("Saving...", new CharCol());
                 saveGame();
                 postMessage("Save successful.", new CharCol());
+                gs = GS_MAIN_MENU;
               }
-              gs = GS_MAIN_MENU;
               selectType = SELECT_NONE;
             }
           }
@@ -584,21 +654,18 @@ public class Game extends JFrame implements KeyListener {
       for(Item i : player.getInv().items) {
         inv += i.getSaveName() + ",";
       }
-      System.out.println(inv);
       out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
       //Section 3: Player backpack. See Section 2 for format.
       inv = "";
       for(Item i : player.getInv().backpack) {
         inv += i.getSaveName() + ",";
       }
-      System.out.println(inv);
       out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
       //Section 4: All items in the vault. Stored like "Item Name:row:col,"
       inv = "";
       for(Item i : vault.items) {
         inv += i.getSaveName() + ":" + i.getRow() + ":" + i.getCol() + ",";
       }
-      System.out.println(inv);
       out.println(inv.substring(0, inv.length() - (inv.length() > 0 ? 1 : 0)));
       //Done
       out.close();
@@ -620,7 +687,8 @@ public class Game extends JFrame implements KeyListener {
       //Load the player's level and xp
       String[] sec1 = s.nextLine().split(",");
       player.setLevel(Integer.parseInt(sec1[0]));
-      player.setXp(Integer.parseInt(sec1[1]));
+      player.giveXp(Integer.parseInt(sec1[1]));
+      player.heal(player.getMaxHealth() - player.getHealth());
       
       //Load the player's equipment
       String[] sec2 = s.nextLine().split(",");
@@ -649,8 +717,35 @@ public class Game extends JFrame implements KeyListener {
       vault.spawnPlayer(player);
       
       inDungeon = false;
+      
+      s.close();
     } catch(Exception e) {
       e.printStackTrace();
     }
   }
+  
+  /** Deletes the game file (if there is one) and goes to the game lost screen */
+  public void endGame() {
+    try {
+      File f = new File("saves/" + gameName + ".txt");
+      f.delete();
+      gs = GS_GAME_OVER;
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  /** WINDOW STUFF ------------------------------------------------------------------ */
+  
+  public void windowActivated(WindowEvent e) {}
+  public void windowDeactivated(WindowEvent e) {}
+  public void windowIconified(WindowEvent e) {}
+  public void windowDeiconified(WindowEvent e) {}
+  public void windowClosed(WindowEvent e) {}
+  public void windowClosing(WindowEvent e) {
+    if(inDungeon)
+      endGame();
+  }
+  public void windowOpened(WindowEvent e) {}
+  public void windowOpening(WindowEvent e) {}
 }

@@ -10,7 +10,11 @@ public class Info {
   HashMap<String, Vector<Effect>> effects; //adjectives only; list of effects
   HashMap<String, String> types; //what type of thing each name is
   
-  Info() {
+  Game g; //reference to the game
+  
+  Info(Game g) {
+    this.g = g;
+    
     stats = new HashMap<String, HashMap<String, String>>();
     tags = new HashMap<String, Vector<String>>();
     effects = new HashMap<String, Vector<Effect>>();

@@ -14,6 +14,8 @@ public class Unit extends TimeUser {
   
   Info info;
   
+  Effect ailment;
+  
   //Reference to the map this unit is on
   Map map;
   
@@ -76,22 +78,36 @@ public class Unit extends TimeUser {
   
   /** This still needs to account for items and other bonuses */
   public int getAttack() {
-    return 5 * level + inv.getAttack();
+    int attack = 5 * level + inv.getAttack();
+    if(ailment != null && ailment.type.equals("confuse"))
+      attack -= ailment.power;
+    if(ailment != null && ailment.type.equals("bleed"))
+      attack -= 20;
+    return attack;
   }
   
   /** This still needs to account for items and other bonuses */
   public int getDefense() {
-    return 20 + 5 * level + inv.getDefense();
+    int defense = 20 + 5 * level + inv.getDefense();
+    if(ailment != null && ailment.type.equals("daze"))
+      defense -= ailment.power;
+    return defense;
   }
   
   /** This still needs to account for items and other bonuses */
   public int getSpeed() {
-    return 1000 + inv.getSpeed() + inv.getSpeedMassDebuff();
+    int speed = 1000 + inv.getSpeed() + inv.getSpeedMassDebuff();
+    if(ailment != null && ailment.type.equals("slow"))
+      speed += ailment.power;
+    return speed;
   }
   
   /** This still needs to account for items and other bonuses */
   public int getDamage() {
-    return (20 + inv.getDamage()) * (level + 1);
+    int damage = (20 + inv.getDamage()) * (level + 1);
+    if(ailment != null && ailment.type.equals("weaken"))
+      damage -= ailment.power;
+    return damage;
   }
   
   /** This still needs to account for items and other bonuses */
@@ -120,8 +136,26 @@ public class Unit extends TimeUser {
     if(inRange(u) && isVisible(u)) {
       addTime(getAttackSpeed());
       if(getAttack() + Game.rand(0, 100) >= u.getDefense()) { //attack hits
-        u.damage(Game.rand((int)Math.round(0.75 * getDamage()), (int)Math.round(1.25 * getDamage())));
+        u.damage(Game.rand((int)Math.round(0.75 * getDamage()), 1 + (int)Math.round(1.25 * getDamage())));
+        //Check for effects
+        Effect e = getInv().getEffect();
+        if(e != null) {
+          map.addEffect(e, u);
+        }
+        if(this instanceof Player) {
+          info.g.postMessage("You hit the " + ((Monster)u).type + " with your " + (getInv().slotUse("weapon") ? getInv().getSlot("weapon") : "fist") + ".", new CharCol(Color.GREEN));
+        }
+        if(u instanceof Player) {
+          info.g.postMessage("You were hit by the " + ((Monster)this).type + ".", new CharCol(Color.RED));
+        }
         return true;
+      } else {
+        if(this instanceof Player) {
+          info.g.postMessage("You miss the " + ((Monster)u).type + ".", new CharCol(Color.RED));
+        }
+        if(u instanceof Player) {
+          info.g.postMessage("The " + ((Monster)this).type + " missed you.", new CharCol(Color.GREEN));
+        }
       }
     }
     return false;
@@ -131,20 +165,24 @@ public class Unit extends TimeUser {
     * To simplify things, moving onto a square with a unit attacks the unit instead
     */
   public void move(int r, int c) {
-    if(Math.abs(r) <= 1 && Math.abs(c) <= 1) {
-      if(map.getTile(getRow() + r, getCol() + c).isWalkable()) {
-        Unit habitGuy = map.getLocationUnit(getRow() + r, getCol() + c);
-        if(habitGuy == null) {
-          setRow(getRow() + r);
-          setCol(getCol() + c);
-          int distGone = Math.abs(r) + Math.abs(c);
-          if(distGone == 1)
-            addTime(getSpeed());
-          if(distGone == 2)
-            addTime((int)Math.round(getSpeed() * 1.41));
-        } else {
-          //Attack the habitGuy!
-          attack(habitGuy);
+    if(ailment != null && ailment.type.equals("snare")) {
+      setWaiting(true);
+    } else {
+      if(Math.abs(r) <= 1 && Math.abs(c) <= 1) {
+        if(map.getTile(getRow() + r, getCol() + c).isWalkable()) {
+          Unit habitGuy = map.getLocationUnit(getRow() + r, getCol() + c);
+          if(habitGuy == null) {
+            setRow(getRow() + r);
+            setCol(getCol() + c);
+            int distGone = Math.abs(r) + Math.abs(c);
+            if(distGone == 1)
+              addTime(getSpeed());
+            if(distGone == 2)
+              addTime((int)Math.round(getSpeed() * 1.41));
+          } else {
+            //Attack the habitGuy!
+            attack(habitGuy);
+          }
         }
       }
     }

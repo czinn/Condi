@@ -38,6 +38,11 @@ public class Monster extends Unit {
     if(getMap().sight(getRow(), getCol(), getMap().getPlayer().getRow(), getMap().getPlayer().getCol())) {
       playerRow = getMap().getPlayer().getRow();
       playerCol = getMap().getPlayer().getCol();
+      //Check whether in range for an attack
+      if(Math.max(Math.abs(playerRow - getRow()), Math.abs(playerCol - getCol())) <= getRange()) {
+        attack(getMap().getPlayer());
+        return;
+      }
     }
     
     //Move towards the player or don't move at all
@@ -52,7 +57,13 @@ public class Monster extends Unit {
       int oldCol = getCol();
       move(rowChange, colChange);
       if(getRow() == oldRow && getCol() == oldCol) {
-        setWaiting(true);
+        move(rowChange, 0);
+        if(getRow() == oldRow && getCol() == oldCol) {
+          move(0, colChange);
+          if(getRow() == oldRow && getCol() == oldCol) {
+            setWaiting(true);
+          }
+        }
       }
     } else {
       setWaiting(true);
@@ -71,5 +82,14 @@ public class Monster extends Unit {
   /** Returns the character colour that should be used to represent the player */
   public CharCol getCharCol() {
     return new CharCol(Color.GREEN);
+  }
+}
+
+class Pos {
+  int row;
+  int col;
+  Pos(int row, int col) {
+    this.row = row;
+    this.col = col;
   }
 }

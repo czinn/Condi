@@ -10,11 +10,10 @@ import java.util.Vector;
 public class Map {
   Tile[][] tiles;
   Vector<TimeUser> tus;
+  Vector<TimeUser> addtotus;
   Vector<Item> items; //that have been dropped
   
   Info info;
-  
-  boolean hasExit;
   
   static int SPLIT_MIN = 20;
   static int MIN_ROOM_SIZE = 8;
@@ -22,12 +21,13 @@ public class Map {
   Map(int rows, int cols, Info info) {
     this.info = info;
     
+    addtotus = new Vector<TimeUser>();
+    
     tiles = new Tile[rows][cols];
     clear();
   }
   
   public void clear() {
-    hasExit = false;
     tiles = new Tile[getRows()][getCols()];
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
@@ -56,7 +56,7 @@ public class Map {
   /** Recursively generates a dungeon map inside the given box
     * Map should be clear()ed beforehand
     */
-  public void generateDungeon(int level, int row, int col, int height, int width) {
+  public void generateDungeon(int level, int row, int col, int height, int width, boolean hasEnter, boolean hasExit) {
     //At least one dimension must be over SPLIT_MIN (dimensions under SPLIT_MIN should not be split)
     if(height >= SPLIT_MIN || width >= SPLIT_MIN) {
       boolean vertSplit = Game.rand(0, 2) == 0; //whether the seperation line is vertical or horizontal (random)
@@ -65,8 +65,8 @@ public class Map {
       
       if(vertSplit) { //splitting vertically
         int splitLine = Game.rand(MIN_ROOM_SIZE, width - MIN_ROOM_SIZE);
-        generateDungeon(level, row, col, height, splitLine);
-        generateDungeon(level, row, col + splitLine, height, width - splitLine);
+        generateDungeon(level, row, col, height, splitLine, hasEnter, false);
+        generateDungeon(level, row, col + splitLine, height, width - splitLine, false, hasExit);
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, height - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int colIndex = col + splitLine;
@@ -81,8 +81,8 @@ public class Map {
         }
       } else { //splitting horizontally
         int splitLine = Game.rand(MIN_ROOM_SIZE, height - MIN_ROOM_SIZE);
-        generateDungeon(level, row, col, splitLine, width);
-        generateDungeon(level, row + splitLine, col, height - splitLine, width);
+        generateDungeon(level, row, col, splitLine, width, hasEnter, false);
+        generateDungeon(level, row + splitLine, col, height - splitLine, width, false, hasExit);
         //connect them
         int pathPos = Game.rand(MIN_ROOM_SIZE / 2, width - (MIN_ROOM_SIZE / 2)); //somewhere where there is definitely room on both sides
         int rowIndex = row + splitLine;
@@ -120,9 +120,10 @@ public class Map {
         getTile(rmrow + rmheight - 4, rmcol + 3).setType(Tile.PILLAR);
       }
       //Put a monster in or the exit
-      if(Game.rand(0, 5) == 0 && !hasExit) {
-        hasExit = true;
+      if(hasExit) {
         getTile(rmrow + rmheight / 2, rmcol + rmwidth / 2).setType(Tile.EXIT_DUNGEON);
+      } else if(hasEnter) {
+        getTile(rmrow + rmheight / 2, rmcol + rmwidth / 2).setType(Tile.DUNGEON_SPAWN);
       } else {
         //Spawn monsters and/or loot in the room (depending on size)
         //For now, spawn one monster right in the middle
@@ -224,7 +225,7 @@ public class Map {
     //Find the dungeon entrance or exit and spawn them on it
     for(int i = 0; i < getRows(); i++) {
       for(int j = 0; j < getCols(); j++) {
-        if(getTile(i, j).getType() == Tile.ENTER_DUNGEON || getTile(i, j).getType() == Tile.EXIT_DUNGEON) {
+        if(getTile(i, j).getType() == Tile.ENTER_DUNGEON || getTile(i, j).getType() == Tile.DUNGEON_SPAWN) {
           p.setRow(i);
           p.setCol(j);
           i = getRows();
@@ -239,10 +240,22 @@ public class Map {
     tus.add(new Monster(level, row, col, this, info));
   }
   
+  /** Applies an Effect to a unit and sets the effect up in the time system */
+  public void addEffect(Effect e, Unit u) {
+    if(u.ailment == null) {
+      addtotus.add(e);
+      e.applyEffect(u);
+      u.ailment = e;
+    }
+  }
+  
   /** Passes time for all TimeUsers equal to the smallest time among them.
     * Asks the first TimeUser for a move (unless that TimeUser is a Player)
     * Returns the length of time passed */
   public int passTime() {
+    tus.addAll(addtotus);
+    addtotus = new Vector<TimeUser>();
+    
     TimeUser smallUser = null;
     for(TimeUser t : tus) {
       if((smallUser == null || t.getTime() < smallUser.getTime()) && !t.isWaiting()) {
@@ -264,6 +277,7 @@ public class Map {
         t.takeTurn();
       }
     }
+    tus.addAll(addtotus);
     
     //Return time passed
     return timePass;
@@ -294,18 +308,26 @@ public class Map {
         if(u.isDead()) {
           if(u instanceof Monster) {
             deadThings.add(t);
+            u.info.g.postMessage("The " + ((Monster)u).type + " is dead!", new CharCol(Color.GREEN));
             //Drop loot
-            if(Game.rand(0, 1) == 0) {
+            if(Game.rand(0, 3) == 0) {
               //Choose a random piece of loot from the inventory
               Item loot = u.getInv().items.get(Game.rand(0, u.getInv().items.size()));
               dropItem(loot, u.getRow(), u.getCol());
             }
+            //Give xp
+            getPlayer().giveXp(Game.rand(10, 31));
             continue;
           } else { //it's a player
             //Deal with game loss here somehow, or mark the map as lost, idk
-            //For now, heal to full hp
-            u.heal(u.getMaxHealth() - u.getHealth());
+            u.info.g.endGame();
           }
+        }
+      } else if(t instanceof Effect) {
+        Effect e = (Effect)t;
+        if(e.durationLeft <= 0) {
+          deadThings.add(t);
+          e.victim.ailment = null;
         }
       }
     }
@@ -360,7 +382,8 @@ public class Map {
     //Draw items if they are visible
     for(Item i : items) {
       if(sight(vr, vc, i.getRow(), i.getCol())) {
-        p.drawChar('$', new CharCol(Color.YELLOW), row + i.getRow() - srow, col + i.getCol() - scol);
+        if(i.getRow() - srow >= 0 && i.getRow() - srow < height && i.getCol() - scol >= 0 && i.getCol() - scol < width)
+          p.drawChar('$', new CharCol(Color.YELLOW), row + i.getRow() - srow, col + i.getCol() - scol);
       }
     }
     
@@ -368,8 +391,14 @@ public class Map {
     for(TimeUser t : tus) {
       if(t instanceof Unit) {
         Unit u = (Unit)t;
-        if(sight(vr, vc, u.getRow(), u.getCol()))
-          p.drawChar(u.getChar(), u.getCharCol(), row + u.getRow() - srow, col + u.getCol() - scol);
+        if(sight(vr, vc, u.getRow(), u.getCol())) {
+          if(u.getRow() - srow >= 0 && u.getRow() - srow < height && u.getCol() - scol >= 0 && u.getCol() - scol < width) {
+            CharCol cc = u.getCharCol();
+            if(u.ailment != null && Game.flash())
+              cc.bg = u.ailment.getColor();
+            p.drawChar(u.getChar(), cc, row + u.getRow() - srow, col + u.getCol() - scol);
+          }
+        }
       }
     }
   }
@@ -391,6 +420,7 @@ class Tile {
   static int PILLAR = 2;
   static int ENTER_DUNGEON = 3;
   static int EXIT_DUNGEON = 4;
+  static int DUNGEON_SPAWN = 5;
   
   Tile(int type) {
     this(type, 0);
@@ -433,6 +463,8 @@ class Tile {
       return '>';
     if(type == EXIT_DUNGEON)
       return '<';
+    if(type == DUNGEON_SPAWN)
+      return '.';
     
     return '?';
   }
@@ -452,6 +484,8 @@ class Tile {
       return new CharCol();
     if(type == EXIT_DUNGEON)
       return new CharCol();
+    if(type == DUNGEON_SPAWN)
+      return new CharCol();
     
     return new CharCol();
   }
@@ -466,6 +500,7 @@ class Tile {
     if(type == PILLAR) return true;
     if(type == ENTER_DUNGEON) return false;
     if(type == EXIT_DUNGEON) return false;
+    if(type == DUNGEON_SPAWN) return false;
     
     return false;
   }
@@ -480,6 +515,7 @@ class Tile {
     if(type == PILLAR) return false;
     if(type == ENTER_DUNGEON) return true;
     if(type == EXIT_DUNGEON) return true;
+    if(type == DUNGEON_SPAWN) return true;
     
     return true;
   }

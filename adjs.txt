@@ -1,14 +1,14 @@
 Sharpened=
   tags:melee,
   attack:10,
-  effect:30:bleed:500:5
+  effect:30:bleed:5000:5
 ;
 Flaming=
   tags:melee+ranged,
-  effect:50:fire:300:2
+  effect:50:fire:3000:2
 ;
 Heavy=
   tags:heavy,
   mass:1,
-  effect:40:stun:400:0
+  effect:40:stun:4000:0
 ;
