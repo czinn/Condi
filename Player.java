@@ -18,7 +18,7 @@ public class Player extends Unit {
   
   /** This still needs to account for items and other bonuses */
   public int getMaxHealth() {
-    return 1000 + 50 * level;
+    return 1000 + 300 * level;
   }
   
   /** Returns the character that should be used to represent the player */
